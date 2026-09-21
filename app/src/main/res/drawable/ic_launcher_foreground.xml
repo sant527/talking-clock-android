@@ -1,0 +1,37 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- clock face -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#5AC8FA"
+        android:strokeWidth="5"
+        android:pathData="M54,28 a26,26 0 1,0 0.1,0" />
+    <!-- hands: 7 o'clock-ish -->
+    <path
+        android:strokeColor="#F2F5F9"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L54,38" />
+    <path
+        android:strokeColor="#F2F5F9"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L66,60" />
+    <!-- sound waves -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#5AC8FA"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M82,44 a14,14 0 0,1 0,20" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#5AC8FA"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M26,44 a14,14 0 0,0 0,20" />
+</vector>

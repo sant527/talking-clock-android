@@ -1,0 +1,37 @@
+<resources>
+    <color name="on_accent_dark">#0B0E12</color>
+    <color name="on_accent_light">#FFFFFF</color>
+
+    <!-- Text colours are tinted towards each palette's accent rather than left neutral, so the
+         whole screen — clock digits, dial hands, tick marks, labels — carries the theme's hue
+         instead of only the accented details. Contrast against the background is kept well
+         above the 4.5:1 mark so the clock stays readable at a glance. -->
+
+    <color name="midnight_bg">#0B1016</color>
+    <color name="midnight_text">#CFEAFB</color>
+    <color name="midnight_text_dim">#6F9AB8</color>
+    <color name="midnight_accent">#5AC8FA</color>
+
+    <color name="ember_bg">#160F08</color>
+    <color name="ember_text">#FBDFB4</color>
+    <color name="ember_text_dim">#B8884A</color>
+    <color name="ember_accent">#FFB454</color>
+
+    <color name="forest_bg">#08140D</color>
+    <color name="forest_text">#C9EFD7</color>
+    <color name="forest_text_dim">#6DA383</color>
+    <color name="forest_accent">#5FD08A</color>
+
+    <color name="paper_bg">#F7F9FD</color>
+    <color name="paper_text">#10233F</color>
+    <color name="paper_text_dim">#4A6384</color>
+    <color name="paper_accent">#2F6FED</color>
+
+    <color name="sepia_bg">#F7F0E3</color>
+    <color name="sepia_text">#3A2410</color>
+    <color name="sepia_text_dim">#8A6437</color>
+    <color name="sepia_accent">#A5673F</color>
+
+    <!-- The launcher icon is a fixed asset and does not follow the in-app theme. -->
+    <color name="icon_background">#0B1016</color>
+</resources>

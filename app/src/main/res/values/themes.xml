@@ -1,0 +1,81 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Every screen is NoActionBar and supplies its own toolbar, so each palette needs exactly
+         one style. Layouts read colours through theme attributes rather than @color, which is
+         what lets the theme be swapped at runtime. -->
+
+    <style name="Theme.TimeSpeaker.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorOnPrimary">@color/on_accent_dark</item>
+        <item name="colorSecondaryContainer">?attr/colorPrimary</item>
+        <item name="colorOnSecondaryContainer">?attr/colorOnPrimary</item>
+        <item name="android:colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorSurfaceVariant">?android:attr/colorBackground</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+    </style>
+
+    <style name="Theme.TimeSpeaker.Light" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorOnPrimary">@color/on_accent_light</item>
+        <item name="colorSecondaryContainer">?attr/colorPrimary</item>
+        <item name="colorOnSecondaryContainer">?attr/colorOnPrimary</item>
+        <item name="android:colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorSurfaceVariant">?android:attr/colorBackground</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+    </style>
+
+    <!-- Dark palettes -->
+
+    <style name="Theme.TimeSpeaker.Midnight" parent="Theme.TimeSpeaker.Dark">
+        <item name="colorPrimary">@color/midnight_accent</item>
+        <item name="android:colorBackground">@color/midnight_bg</item>
+        <item name="android:textColorPrimary">@color/midnight_text</item>
+        <item name="android:textColorSecondary">@color/midnight_text_dim</item>
+        <item name="android:statusBarColor">@color/midnight_bg</item>
+        <item name="android:navigationBarColor">@color/midnight_bg</item>
+    </style>
+
+    <style name="Theme.TimeSpeaker.Ember" parent="Theme.TimeSpeaker.Dark">
+        <item name="colorPrimary">@color/ember_accent</item>
+        <item name="android:colorBackground">@color/ember_bg</item>
+        <item name="android:textColorPrimary">@color/ember_text</item>
+        <item name="android:textColorSecondary">@color/ember_text_dim</item>
+        <item name="android:statusBarColor">@color/ember_bg</item>
+        <item name="android:navigationBarColor">@color/ember_bg</item>
+    </style>
+
+    <style name="Theme.TimeSpeaker.Forest" parent="Theme.TimeSpeaker.Dark">
+        <item name="colorPrimary">@color/forest_accent</item>
+        <item name="android:colorBackground">@color/forest_bg</item>
+        <item name="android:textColorPrimary">@color/forest_text</item>
+        <item name="android:textColorSecondary">@color/forest_text_dim</item>
+        <item name="android:statusBarColor">@color/forest_bg</item>
+        <item name="android:navigationBarColor">@color/forest_bg</item>
+    </style>
+
+    <!-- Light palettes -->
+
+    <style name="Theme.TimeSpeaker.Paper" parent="Theme.TimeSpeaker.Light">
+        <item name="colorPrimary">@color/paper_accent</item>
+        <item name="android:colorBackground">@color/paper_bg</item>
+        <item name="android:textColorPrimary">@color/paper_text</item>
+        <item name="android:textColorSecondary">@color/paper_text_dim</item>
+        <item name="android:statusBarColor">@color/paper_bg</item>
+        <item name="android:navigationBarColor">@color/paper_bg</item>
+    </style>
+
+    <style name="Theme.TimeSpeaker.Sepia" parent="Theme.TimeSpeaker.Light">
+        <item name="colorPrimary">@color/sepia_accent</item>
+        <item name="android:colorBackground">@color/sepia_bg</item>
+        <item name="android:textColorPrimary">@color/sepia_text</item>
+        <item name="android:textColorSecondary">@color/sepia_text_dim</item>
+        <item name="android:statusBarColor">@color/sepia_bg</item>
+        <item name="android:navigationBarColor">@color/sepia_bg</item>
+    </style>
+
+    <style name="SettingLabel" parent="">
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+</resources>

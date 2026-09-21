@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">Time Speaker</string>
+
+    <string name="hide_time">Hide time</string>
+    <string name="show_time">Show time</string>
+    <string name="time_hidden">Time hidden — announcements continue</string>
+    <string name="speaking_on">Announcements: ON</string>
+    <string name="speaking_off">Announcements: OFF</string>
+    <string name="speak_now">Speak now</string>
+    <string name="status_next">Next announcement at %1$s</string>
+    <string name="status_preparing">Starting…</string>
+    <string name="status_muted">Off — tap “Announcements: OFF” to resume</string>
+    <string name="status_tts_failed">No text-to-speech voice available on this device</string>
+    <string name="placeholder_time">--:--:--</string>
+    <string name="footnote">Keeps announcing while the screen is off</string>
+
+    <string name="notification_channel">Time announcements</string>
+    <string name="notification_channel_description">Keeps the five-minute announcements running while the screen is off</string>
+    <string name="notification_title">Time Speaker is running</string>
+    <string name="notification_stop">Stop</string>
+
+    <string name="settings">Voice &amp; volume</string>
+    <string name="volume_label">Volume: %1$d%%</string>
+    <string name="volume_label_boosted">Volume: %1$d%% (boosted)</string>
+    <string name="boost_note">Above 100% the announcement is amplified past the device\'s media volume. Music and other apps are unaffected.</string>
+    <string name="boost_note_high">Very high boost trades quality for loudness — the voice may sound harsh or distorted.</string>
+    <string name="pitch_label">Pitch: %1$d%%</string>
+    <string name="pitch_hint">Lower sounds deeper, higher sounds lighter.</string>
+    <string name="rate_label">Speed: %1$d%%</string>
+    <string name="voice_heading">Voice</string>
+    <string name="voice_hint">Tap a voice to hear it, then use M or F to note down what you heard. These are your own labels — Android does not tell apps a voice\'s gender, and labelling does not change how a voice sounds.</string>
+    <string name="voice_column">Voices</string>
+    <string name="voice_column_label">Label</string>
+    <string name="sort_heading">Sort</string>
+    <string name="sort_default">By accent</string>
+    <string name="sort_by_label">By label</string>
+    <string name="male_short">M</string>
+    <string name="female_short">F</string>
+    <string name="voice_named">Voice %1$d · %2$s</string>
+    <string name="voice_named_gender">Voice %1$d · %2$s · %3$s</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="voice_label">Voice %1$d</string>
+    <string name="voice_loading">Loading voices…</string>
+    <string name="voice_none">This device offers only one voice</string>
+    <string name="voice_unavailable">No text-to-speech engine available</string>
+    <string name="preview">Preview</string>
+    <string name="reset_defaults">Reset to defaults</string>
+
+    <string name="appearance_heading">Appearance</string>
+    <string name="theme_heading">Theme</string>
+    <string name="theme_midnight">Midnight</string>
+    <string name="theme_ember">Ember</string>
+    <string name="theme_forest">Forest</string>
+    <string name="theme_paper">Paper</string>
+    <string name="theme_sepia">Sepia</string>
+    <string name="theme_group_dark">Dark</string>
+    <string name="theme_group_light">Light</string>
+
+    <string name="clock_heading">Clock face</string>
+    <string name="clock_digital">Digital</string>
+    <string name="clock_analog">Analog</string>
+
+    <string name="fullscreen">Full screen</string>
+    <string name="exit_fullscreen">Exit</string>
+    <string name="fullscreen_hint">Tap anywhere for controls</string>
+    <string name="orientation_auto">Auto</string>
+    <string name="orientation_portrait">Portrait</string>
+    <string name="orientation_landscape">Landscape</string>
+
+    <string name="interval_heading">Announcement interval</string>
+    <string name="interval_minutes">minutes</string>
+    <string name="countdown_heading">Countdown</string>
+    <string name="countdown_switch">Count down the minutes in between</string>
+    <string name="countdown_explainer">On every minute between announcements, speak only the number of minutes left — at 7:51 with a five-minute interval it says “four”.</string>
+    <string name="countdown_same_voice">Use the same voice for the countdown</string>
+    <string name="countdown_own_voice_hint">The countdown has its own voice, volume, pitch and speed. Pick which one you are editing below.</string>
+    <string name="profile_announcements">Announcements</string>
+    <string name="profile_countdown">Countdown</string>
+    <string name="editing_profile">Editing</string>
+    <string name="countdown_needs_interval">Not available at a one-minute interval: every minute is already an announcement.</string>
+
+    <plurals name="tagline">
+        <item quantity="one">Announces the time every minute</item>
+        <item quantity="other">Announces the time every %1$d minutes</item>
+    </plurals>
+</resources>

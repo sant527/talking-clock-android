@@ -1,0 +1,14 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Built APKs are attached to GitHub Releases, not committed - git would keep every
+# 5 MB binary forever, including ones later deleted.
+/apk/
