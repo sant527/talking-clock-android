@@ -21,6 +21,23 @@ browser or file manager, then install. Requires **Android 8.0 (API 26)** or newe
 To build it yourself, the output lands at
 `app/build/outputs/apk/debug/app-debug.apk`.
 
+## Screenshots
+
+| Midnight · analog | Forest · digital | Sepia · analog |
+| --- | --- | --- |
+| ![Midnight theme with the analog clock face](docs/screenshots/01-midnight-analog.png) | ![Forest theme with the digital clock face](docs/screenshots/02-forest-digital.png) | ![Sepia light theme with the analog clock face](docs/screenshots/03-sepia-analog.png) |
+
+The row of swatches under the clock switches theme, and the toggle beside it swaps
+between the digital and analog faces — without leaving the screen.
+
+| Settings | Full screen |
+| --- | --- |
+| ![Settings screen showing the announcement interval and countdown options](docs/screenshots/04-settings-interval.png) | ![The clock filling the screen in digital mode](docs/screenshots/05-fullscreen-digital.png) |
+
+Full screen hides the system bars and fills the display, in portrait or landscape:
+
+![The analog clock filling a landscape screen](docs/screenshots/06-fullscreen-analog.png)
+
 ## Features
 
 - Speaks the time on every interval mark — **1, 5, 10, 15, 30 or 60 minutes**
