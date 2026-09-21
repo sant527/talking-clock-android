@@ -1,10 +1,6 @@
 package com.example.timespeaker
 
 import android.media.AudioManager
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
@@ -169,15 +165,8 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
      * enough that you need telling something is happening.
      */
     private fun previewVibration() {
-        val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            getSystemService(VibratorManager::class.java)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Vibrator::class.java)
-        } ?: return
-
         val millis = Prefs.vibrationMillis(this).toLong()
-        device.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
+        Vibration.buzz(this, millis)
 
         binding.vibrationTestButton.setText(R.string.vibration_test_running)
         binding.vibrationTestButton.isEnabled = false
