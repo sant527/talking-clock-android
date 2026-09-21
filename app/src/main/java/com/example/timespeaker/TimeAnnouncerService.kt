@@ -9,9 +9,13 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.media.AudioAttributes
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
@@ -135,11 +139,50 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         }
         if (!Prefs.countdownEnabled(this)) return
 
+        // Vibrate-only is chosen to keep the phone quiet. A countdown that still spoke a number
+        // every minute would defeat that entirely, and the countdown never vibrates — so in that
+        // mode it simply says nothing.
+        if (!Prefs.announcementFeedback(this).speaks) return
+
         val remaining = interval - (now.minute % interval)
         if (ttsReady) speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN) else announcePending = true
     }
 
-    private fun speak(time: LocalTime) = speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAIN)
+    /**
+     * Delivers an announcement as speech, a vibration, or both.
+     *
+     * Only announcements reach here — the countdown speaks through [speakText] directly and never
+     * vibrates.
+     */
+    private fun speak(time: LocalTime) {
+        val feedback = Prefs.announcementFeedback(this)
+        if (feedback.vibrates) vibrate()
+        if (feedback.speaks) speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAIN)
+    }
+
+    private fun vibrate() {
+        val millis = Prefs.vibrationMillis(this).toLong()
+        val effect = VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE)
+
+        // USAGE_ALARM: the point of vibrate-only mode is a phone that has been silenced, and a
+        // notification-usage vibration can be suppressed in exactly that state.
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        val device = vibrator() ?: return
+        @Suppress("DEPRECATION")
+        device.vibrate(effect, attributes)
+    }
+
+    private fun vibrator(): Vibrator? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        }
 
     private fun speakText(text: String, profile: SpeechProfile) {
         val engine = tts ?: return

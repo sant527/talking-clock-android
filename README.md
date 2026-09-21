@@ -30,9 +30,9 @@ To build it yourself, the output lands at
 The row of swatches under the clock switches theme, and the toggle beside it swaps
 between the digital and analog faces — without leaving the screen.
 
-| Settings | Full screen |
-| --- | --- |
-| ![Settings screen showing the announcement interval and countdown options](docs/screenshots/04-settings-interval.png) | ![The clock filling the screen in digital mode](docs/screenshots/05-fullscreen-digital.png) |
+| Settings | Announcement style | Full screen |
+| --- | --- | --- |
+| ![Settings screen showing the announcement interval and countdown options](docs/screenshots/04-settings-interval.png) | ![Announcement style options with the vibration length slider and test button](docs/screenshots/07-announcement-style.png) | ![The clock filling the screen in digital mode](docs/screenshots/05-fullscreen-digital.png) |
 
 Full screen hides the system bars and fills the display, in portrait or landscape:
 
@@ -44,6 +44,9 @@ Full screen hides the system bars and fills the display, in portrait or landscap
 - **Countdown**: optionally speaks the minutes remaining on each minute in between
   ("four", "three", "two", "one"), with its own voice/volume or shared with the
   announcements
+- **Announcement style**: Speak, Speak + vibrate, or **Vibrate only** — a silent
+  mode for when nobody should be woken. Vibration length is adjustable from 0.5 to
+  10 seconds, with a test button
 - Keeps announcing while the screen is off, via a foreground service and exact alarms
 - **Digital or analog** clock face, with hour numerals and a sweeping second hand
 - **Five themes** — Midnight, Ember, Forest (dark); Paper, Sepia (light)
@@ -111,6 +114,7 @@ No Google Play Services, no Firebase, no analytics SDKs.
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE` | Keeps announcing with the screen off |
 | `POST_NOTIFICATIONS` | The ongoing notification the foreground service requires (Android 13+) |
 | `WAKE_LOCK` | Held only for the ~2 seconds of each utterance |
+| `VIBRATE` | The vibrate and vibrate-only announcement styles |
 | `USE_EXACT_ALARM` / `SCHEDULE_EXACT_ALARM` | Announcements must land on the minute |
 | `MODIFY_AUDIO_SETTINGS` | Attaching the loudness amplifier used by the volume boost |
 

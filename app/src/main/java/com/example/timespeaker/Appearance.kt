@@ -41,6 +41,30 @@ enum class SpeechProfile(val keySuffix: String, val labelRes: Int) {
     COUNTDOWN("_countdown", R.string.profile_countdown)
 }
 
+/**
+ * How an announcement makes itself known.
+ *
+ * Vibration is deliberately limited to announcements: the countdown fires every minute, and a
+ * buzz that often would be worse than the noise it is meant to replace.
+ */
+enum class AnnouncementFeedback(
+    val key: String,
+    val labelRes: Int,
+    val speaks: Boolean,
+    val vibrates: Boolean
+) {
+    SPEAK("speak", R.string.feedback_speak, speaks = true, vibrates = false),
+    SPEAK_AND_VIBRATE("both", R.string.feedback_both, speaks = true, vibrates = true),
+    VIBRATE_ONLY("vibrate", R.string.feedback_vibrate, speaks = false, vibrates = true);
+
+    companion object {
+        val DEFAULT = SPEAK
+
+        fun fromKey(key: String?): AnnouncementFeedback =
+            entries.firstOrNull { it.key == key } ?: DEFAULT
+    }
+}
+
 /** Whether the clock is drawn as digits or as a dial. */
 enum class ClockStyle(val key: String, val labelRes: Int) {
     DIGITAL("digital", R.string.clock_digital),

@@ -71,6 +71,79 @@
             style="@style/SettingLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="@string/feedback_heading" />
+
+        <!-- A vertical list, not a toggle row: "Speak + vibrate" and "Vibrate only" cannot both
+             fit across a phone, and a clipped label is worse than an extra line. -->
+        <RadioGroup
+            android:id="@+id/feedbackGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/feedbackSpeakButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/feedback_speak"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/feedbackBothButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/feedback_both"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/feedbackVibrateButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/feedback_vibrate"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="15sp" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/vibrationLabel"
+            style="@style/SettingLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/vibrationSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="500"
+            android:valueFrom="500"
+            android:valueTo="10000"
+            android:visibility="gone"
+            app:labelBehavior="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/vibrationTestButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/vibration_test"
+            android:visibility="gone"
+            app:cornerRadius="14dp" />
+
+        <TextView
+            style="@style/SettingLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:text="@string/countdown_heading" />
 
         <com.google.android.material.materialswitch.MaterialSwitch

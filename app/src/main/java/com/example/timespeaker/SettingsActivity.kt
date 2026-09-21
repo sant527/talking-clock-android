@@ -1,6 +1,10 @@
 package com.example.timespeaker
 
 import android.media.AudioManager
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
@@ -47,6 +51,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         lockToPortrait()
 
         setUpIntervalPicker()
+        setUpFeedbackPicker()
         setUpCountdownSwitch()
         setUpProfileSwitcher()
         setUpThemePicker()
@@ -104,6 +109,82 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             TimeAnnouncerService.reschedule(this)
             refreshCountdownAvailability()
         }
+    }
+
+    private fun setUpFeedbackPicker() {
+        binding.feedbackGroup.check(buttonFor(Prefs.announcementFeedback(this)))
+        binding.feedbackGroup.setOnCheckedChangeListener { _, checkedId ->
+            Prefs.setAnnouncementFeedback(this, feedbackFor(checkedId))
+            refreshVibrationControls()
+        }
+
+        binding.vibrationSlider.value = Prefs.vibrationMillis(this).toFloat()
+        binding.vibrationSlider.addOnChangeListener { _, value, fromUser ->
+            if (!fromUser) return@addOnChangeListener
+            Prefs.setVibrationMillis(this, value.toInt())
+            updateVibrationLabel()
+        }
+        binding.vibrationSlider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) = Unit
+            // Feeling the length you just chose is the only way to judge it.
+            override fun onStopTrackingTouch(slider: Slider) = previewVibration()
+        })
+
+        binding.vibrationTestButton.setOnClickListener { previewVibration() }
+
+        refreshVibrationControls()
+    }
+
+    private fun buttonFor(feedback: AnnouncementFeedback): Int = when (feedback) {
+        AnnouncementFeedback.SPEAK -> binding.feedbackSpeakButton.id
+        AnnouncementFeedback.SPEAK_AND_VIBRATE -> binding.feedbackBothButton.id
+        AnnouncementFeedback.VIBRATE_ONLY -> binding.feedbackVibrateButton.id
+    }
+
+    private fun feedbackFor(buttonId: Int): AnnouncementFeedback = when (buttonId) {
+        binding.feedbackBothButton.id -> AnnouncementFeedback.SPEAK_AND_VIBRATE
+        binding.feedbackVibrateButton.id -> AnnouncementFeedback.VIBRATE_ONLY
+        else -> AnnouncementFeedback.SPEAK
+    }
+
+    /** The length control is only meaningful when something actually vibrates. */
+    private fun refreshVibrationControls() {
+        val vibrates = Prefs.announcementFeedback(this).vibrates
+        val visibility = if (vibrates) View.VISIBLE else View.GONE
+        binding.vibrationLabel.visibility = visibility
+        binding.vibrationSlider.visibility = visibility
+        binding.vibrationTestButton.visibility = visibility
+        if (vibrates) updateVibrationLabel()
+    }
+
+    private fun updateVibrationLabel() {
+        val seconds = Prefs.vibrationMillis(this) / 1000f
+        binding.vibrationLabel.text = getString(R.string.vibration_label, SECONDS_FORMAT.format(seconds))
+    }
+
+    /**
+     * Buzzes for the chosen length, and says so while it runs.
+     *
+     * At the long end of the slider a silent button would look broken — ten seconds is long
+     * enough that you need telling something is happening.
+     */
+    private fun previewVibration() {
+        val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        } ?: return
+
+        val millis = Prefs.vibrationMillis(this).toLong()
+        device.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
+
+        binding.vibrationTestButton.setText(R.string.vibration_test_running)
+        binding.vibrationTestButton.isEnabled = false
+        binding.vibrationTestButton.postDelayed({
+            binding.vibrationTestButton.setText(R.string.vibration_test)
+            binding.vibrationTestButton.isEnabled = true
+        }, millis)
     }
 
     private fun setUpCountdownSwitch() {
@@ -415,6 +496,9 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private companion object {
         const val PREVIEW_UTTERANCE = "settings-preview"
         const val PADDING_VERTICAL = 24
+
+        /** One decimal place: the slider steps in half-seconds. */
+        val SECONDS_FORMAT: java.text.DecimalFormat = java.text.DecimalFormat("0.0")
 
         /** Past this the limiter is working hard enough to be audible. */
         const val HARSH_BOOST_PERCENT = 250

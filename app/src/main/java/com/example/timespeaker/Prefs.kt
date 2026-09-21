@@ -16,6 +16,8 @@ object Prefs {
     private const val KEY_RATE = "announcement_rate"
     private const val KEY_VOICE = "announcement_voice"
     private const val KEY_COUNTDOWN_SAME_VOICE = "countdown_same_voice"
+    private const val KEY_FEEDBACK = "announcement_feedback"
+    private const val KEY_VIBRATION_MS = "vibration_millis"
     private const val KEY_GENDER_PREFIX = "voice_gender_"
     private const val KEY_SORT_BY_LABEL = "voice_sort_by_label"
     private const val KEY_THEME = "app_theme"
@@ -28,6 +30,11 @@ object Prefs {
     const val FEMALE = "F"
 
     const val DEFAULT_INTERVAL_MINUTES = 5
+
+    /** Vibration length, in tenths of a second, as the slider works in half-second steps. */
+    const val DEFAULT_VIBRATION_MS = 1000
+    const val MIN_VIBRATION_MS = 500
+    const val MAX_VIBRATION_MS = 10000
 
     /** Intervals offered in settings. All divide 60, so marks line up with the top of the hour. */
     val INTERVAL_CHOICES = listOf(1, 5, 10, 15, 30, 60)
@@ -145,6 +152,22 @@ object Prefs {
 
     fun setCountdownEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_COUNTDOWN, enabled).apply()
+    }
+
+    /** Whether announcements speak, vibrate, or both. Never applies to the countdown. */
+    fun announcementFeedback(context: Context): AnnouncementFeedback =
+        AnnouncementFeedback.fromKey(prefs(context).getString(KEY_FEEDBACK, null))
+
+    fun setAnnouncementFeedback(context: Context, feedback: AnnouncementFeedback) {
+        prefs(context).edit().putString(KEY_FEEDBACK, feedback.key).apply()
+    }
+
+    fun vibrationMillis(context: Context): Int =
+        prefs(context).getInt(KEY_VIBRATION_MS, DEFAULT_VIBRATION_MS)
+            .coerceIn(MIN_VIBRATION_MS, MAX_VIBRATION_MS)
+
+    fun setVibrationMillis(context: Context, millis: Int) {
+        putInt(context, KEY_VIBRATION_MS, millis.coerceIn(MIN_VIBRATION_MS, MAX_VIBRATION_MS))
     }
 
     fun theme(context: Context): AppTheme =

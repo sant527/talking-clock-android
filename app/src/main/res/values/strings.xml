@@ -70,6 +70,15 @@
 
     <string name="interval_heading">Announcement interval</string>
     <string name="interval_minutes">minutes</string>
+    <string name="feedback_heading">Announcement style</string>
+    <string name="feedback_speak">Speak</string>
+    <string name="feedback_both">Speak and vibrate</string>
+    <string name="feedback_vibrate">Vibrate only (silent)</string>
+    <string name="feedback_hint">Vibrate only keeps announcements silent — useful when someone is asleep. The countdown never vibrates.</string>
+    <string name="vibration_test">Test vibration</string>
+    <string name="vibration_test_running">Vibrating…</string>
+    <string name="vibration_label">Vibration length: %1$s s</string>
+
     <string name="countdown_heading">Countdown</string>
     <string name="countdown_switch">Count down the minutes in between</string>
     <string name="countdown_explainer">On every minute between announcements, speak only the number of minutes left — at 7:51 with a five-minute interval it says “four”.</string>
