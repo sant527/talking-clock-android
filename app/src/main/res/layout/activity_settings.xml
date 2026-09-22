@@ -217,9 +217,46 @@
                 android:text="@string/clock_analog" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <!-- The label sits above rather than beside the tabs: side by side there was not enough
-             width left for "Countdown", which clipped to "C...". The scroll view is a backstop
-             for longer translations. -->
+        <TextView
+            style="@style/SettingLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/major_heading" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/majorSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/major_switch"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/major_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/majorRepeatsLabel"
+            style="@style/SettingLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/majorRepeatsSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="1"
+            android:valueFrom="1"
+            android:valueTo="5"
+            android:visibility="gone"
+            app:labelBehavior="gone" />
+
+        <!-- Built in code: which voices exist depends on whether the countdown and major
+             announcements are on. A vertical list because three labels will not fit a row. -->
         <LinearLayout
             android:id="@+id/profileRow"
             android:layout_width="match_parent"
@@ -231,43 +268,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="2dp"
                 android:text="@string/editing_profile"
                 android:textAllCaps="true"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp" />
 
-            <HorizontalScrollView
+            <RadioGroup
+                android:id="@+id/profileGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/profileGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:selectionRequired="true"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/profileMainButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minWidth="0dp"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/profile_announcements" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/profileCountdownButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minWidth="0dp"
-                        android:paddingHorizontal="16dp"
-                        android:text="@string/profile_countdown" />
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-            </HorizontalScrollView>
+                android:orientation="vertical" />
         </LinearLayout>
 
         <TextView

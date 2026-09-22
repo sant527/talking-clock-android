@@ -36,6 +36,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var profile = SpeechProfile.MAIN
     private var naturalOrder: List<Voice> = emptyList()
     private val themeRadios = linkedMapOf<AppTheme, RadioButton>()
+    private val profileRadios = linkedMapOf<Int, SpeechProfile>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         applyStoredTheme()
@@ -49,7 +50,8 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setUpIntervalPicker()
         setUpFeedbackPicker()
         setUpCountdownSwitch()
-        setUpProfileSwitcher()
+        setUpMajorControls()
+        refreshProfileSwitcher()
         setUpThemePicker()
         setUpClockStylePicker()
 
@@ -182,6 +184,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Prefs.setCountdownEnabled(this, checked)
             TimeAnnouncerService.reschedule(this)
             refreshCountdownAvailability()
+            refreshProfileSwitcher()
         }
 
         binding.sameVoiceSwitch.isChecked = Prefs.countdownUsesMainVoice(this)
@@ -191,30 +194,93 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             // announcements one whenever the countdown stops having its own.
             if (same) selectProfile(SpeechProfile.MAIN)
             refreshCountdownAvailability()
+            refreshProfileSwitcher()
         }
 
         refreshCountdownAvailability()
     }
 
-    private fun setUpProfileSwitcher() {
-        binding.profileGroup.check(buttonFor(profile))
-        binding.profileGroup.addOnButtonCheckedListener { _, checkedId, checked ->
-            if (!checked) return@addOnButtonCheckedListener
-            selectProfile(
-                if (checkedId == binding.profileCountdownButton.id) SpeechProfile.COUNTDOWN
-                else SpeechProfile.MAIN
-            )
+    private fun setUpMajorControls() {
+        binding.majorSwitch.isChecked = Prefs.majorEnabled(this)
+        binding.majorSwitch.setOnCheckedChangeListener { _, enabled ->
+            Prefs.setMajorEnabled(this, enabled)
+            // Quarter hours may not be interval marks, so the pending alarm has to move.
+            TimeAnnouncerService.reschedule(this)
+            refreshMajorControls()
+            refreshProfileSwitcher()
         }
+
+        binding.majorRepeatsSlider.value = Prefs.majorRepeats(this).toFloat()
+        binding.majorRepeatsSlider.addOnChangeListener { _, value, fromUser ->
+            if (!fromUser) return@addOnChangeListener
+            Prefs.setMajorRepeats(this, value.toInt())
+            updateMajorRepeatsLabel()
+        }
+
+        refreshMajorControls()
     }
 
-    private fun buttonFor(which: SpeechProfile): Int =
-        if (which == SpeechProfile.COUNTDOWN) binding.profileCountdownButton.id
-        else binding.profileMainButton.id
+    private fun refreshMajorControls() {
+        val enabled = Prefs.majorEnabled(this)
+        val visibility = if (enabled) View.VISIBLE else View.GONE
+        binding.majorRepeatsLabel.visibility = visibility
+        binding.majorRepeatsSlider.visibility = visibility
+        if (enabled) updateMajorRepeatsLabel()
+    }
+
+    private fun updateMajorRepeatsLabel() {
+        binding.majorRepeatsLabel.text =
+            getString(R.string.major_repeats_label, Prefs.majorRepeats(this))
+    }
+
+    /**
+     * Rebuilds the "Editing" list from the voices actually in play.
+     *
+     * Offering a Countdown tab while the countdown shares the main voice, or a Major tab while
+     * major announcements are off, would be offering settings that change nothing.
+     */
+    private fun refreshProfileSwitcher() {
+        val available = buildList {
+            add(SpeechProfile.MAIN)
+            if (Prefs.countdownEnabled(this@SettingsActivity) &&
+                !Prefs.countdownUsesMainVoice(this@SettingsActivity)
+            ) {
+                add(SpeechProfile.COUNTDOWN)
+            }
+            if (Prefs.majorEnabled(this@SettingsActivity)) add(SpeechProfile.MAJOR)
+        }
+
+        binding.profileRow.visibility = if (available.size > 1) View.VISIBLE else View.GONE
+
+        if (profile !in available) {
+            profile = SpeechProfile.MAIN
+            loadProfileIntoControls()
+            if (ttsReady) renderVoices()
+        }
+
+        binding.profileGroup.setOnCheckedChangeListener(null)
+        binding.profileGroup.removeAllViews()
+        profileRadios.clear()
+
+        available.forEach { candidate ->
+            val button = RadioButton(this).apply {
+                id = View.generateViewId()
+                text = getString(candidate.labelRes)
+                isChecked = candidate == profile
+                setTextColor(textColorPrimary())
+            }
+            profileRadios[button.id] = candidate
+            binding.profileGroup.addView(button)
+        }
+
+        binding.profileGroup.setOnCheckedChangeListener { _, checkedId ->
+            profileRadios[checkedId]?.let { selectProfile(it) }
+        }
+    }
 
     private fun selectProfile(which: SpeechProfile) {
         if (profile == which) return
         profile = which
-        binding.profileGroup.check(buttonFor(which))
         loadProfileIntoControls()
         if (ttsReady) renderVoices()
     }
@@ -240,8 +306,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // with settings of its own.
         val counting = usable && Prefs.countdownEnabled(this)
         binding.sameVoiceSwitch.isEnabled = counting
-        binding.profileRow.visibility =
-            if (counting && !Prefs.countdownUsesMainVoice(this)) View.VISIBLE else View.GONE
     }
 
     private fun setUpThemePicker() {
@@ -441,13 +505,15 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val engine = tts ?: return
         if (!ttsReady) return
         // Same path the real announcements take, so what you hear is what you will get.
-        // Preview what the selected profile actually says: the countdown speaks a bare number.
+        // Preview what the selected profile actually does: the countdown speaks a bare number,
+        // and a major announcement repeats.
         val text = if (profile == SpeechProfile.COUNTDOWN) {
             TimeSpeech.number(Prefs.intervalMinutes(this) - 1)
         } else {
             TimeSpeech.phraseFor(LocalTime.now())
         }
-        output.speak(engine, text, PREVIEW_UTTERANCE, profile)
+        val repeats = if (profile == SpeechProfile.MAJOR) Prefs.majorRepeats(this) else 1
+        output.speak(engine, text, PREVIEW_UTTERANCE, profile, repeats)
     }
 
     private fun resetToDefaults() {

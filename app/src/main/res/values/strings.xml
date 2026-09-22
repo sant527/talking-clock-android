@@ -79,6 +79,12 @@
     <string name="vibration_test_running">Vibrating…</string>
     <string name="vibration_label">Vibration length: %1$s s</string>
 
+    <string name="major_heading">Major announcement</string>
+    <string name="major_switch">Announce the quarter hours</string>
+    <string name="major_hint">A stronger marker at :00, :15, :30 and :45, whatever the ordinary interval is. The time is repeated, and it has its own voice and volume.</string>
+    <string name="major_repeats_label">Repeat: %1$d times</string>
+    <string name="profile_major">Major</string>
+
     <string name="countdown_heading">Countdown</string>
     <string name="countdown_switch">Count down the minutes in between</string>
     <string name="countdown_explainer">On every minute between announcements, speak only the number of minutes left — at 7:51 with a five-minute interval it says “four”.</string>

@@ -18,6 +18,8 @@ object Prefs {
     private const val KEY_COUNTDOWN_SAME_VOICE = "countdown_same_voice"
     private const val KEY_FEEDBACK = "announcement_feedback"
     private const val KEY_VIBRATION_MS = "vibration_millis"
+    private const val KEY_MAJOR_ENABLED = "major_enabled"
+    private const val KEY_MAJOR_REPEATS = "major_repeats"
     private const val KEY_GENDER_PREFIX = "voice_gender_"
     private const val KEY_SORT_BY_LABEL = "voice_sort_by_label"
     private const val KEY_THEME = "app_theme"
@@ -30,6 +32,12 @@ object Prefs {
     const val FEMALE = "F"
 
     const val DEFAULT_INTERVAL_MINUTES = 5
+
+    /** Major announcements land on the quarter hours, independent of the ordinary interval. */
+    const val MAJOR_INTERVAL_MINUTES = 15
+    const val DEFAULT_MAJOR_REPEATS = 3
+    const val MIN_MAJOR_REPEATS = 1
+    const val MAX_MAJOR_REPEATS = 5
 
     /** Vibration length, in tenths of a second, as the slider works in half-second steps. */
     const val DEFAULT_VIBRATION_MS = 1000
@@ -169,6 +177,27 @@ object Prefs {
     fun setVibrationMillis(context: Context, millis: Int) {
         putInt(context, KEY_VIBRATION_MS, millis.coerceIn(MIN_VIBRATION_MS, MAX_VIBRATION_MS))
     }
+
+    /**
+     * Whether the quarter hours get a major announcement.
+     *
+     * Deliberately not tied to the ordinary interval: the point is a stronger marker at :00,
+     * :15, :30 and :45 whatever the interval happens to be.
+     */
+    fun majorEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_MAJOR_ENABLED, false)
+
+    fun setMajorEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_MAJOR_ENABLED, enabled).apply()
+    }
+
+    /** How many times a major announcement repeats the time. */
+    fun majorRepeats(context: Context): Int =
+        prefs(context).getInt(KEY_MAJOR_REPEATS, DEFAULT_MAJOR_REPEATS)
+            .coerceIn(MIN_MAJOR_REPEATS, MAX_MAJOR_REPEATS)
+
+    fun setMajorRepeats(context: Context, repeats: Int) =
+        putInt(context, KEY_MAJOR_REPEATS, repeats.coerceIn(MIN_MAJOR_REPEATS, MAX_MAJOR_REPEATS))
 
     fun theme(context: Context): AppTheme =
         AppTheme.fromKey(prefs(context).getString(KEY_THEME, null))

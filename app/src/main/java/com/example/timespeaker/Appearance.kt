@@ -38,7 +38,8 @@ enum class AppTheme(
  */
 enum class SpeechProfile(val keySuffix: String, val labelRes: Int) {
     MAIN("", R.string.profile_announcements),
-    COUNTDOWN("_countdown", R.string.profile_countdown)
+    COUNTDOWN("_countdown", R.string.profile_countdown),
+    MAJOR("_major", R.string.profile_major)
 }
 
 /**

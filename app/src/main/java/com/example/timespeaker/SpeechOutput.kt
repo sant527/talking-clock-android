@@ -21,11 +21,18 @@ class SpeechOutput(private val context: Context) {
     var boostUnsupported: Boolean = false
         private set
 
+    /**
+     * Speaks [text], optionally [repeats] times back to back.
+     *
+     * The first utterance flushes whatever came before; the rest queue behind it, because a
+     * second FLUSH would simply cancel the first and you would hear the time once.
+     */
     fun speak(
         engine: TextToSpeech,
         text: String,
         utteranceId: String,
-        requestedProfile: SpeechProfile = SpeechProfile.MAIN
+        requestedProfile: SpeechProfile = SpeechProfile.MAIN,
+        repeats: Int = 1
     ) {
         val profile = Prefs.effectiveProfile(context, requestedProfile)
         VoiceSettings.applyTo(engine, context, profile)
@@ -44,7 +51,10 @@ class SpeechOutput(private val context: Context) {
             putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
             putInt(TextToSpeech.Engine.KEY_PARAM_SESSION_ID, sessionId)
         }
-        engine.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+        repeat(repeats.coerceAtLeast(1)) { index ->
+            val mode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
+            engine.speak(text, mode, params, "$utteranceId-$index")
+        }
     }
 
     /**

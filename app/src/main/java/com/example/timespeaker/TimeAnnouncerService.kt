@@ -37,6 +37,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     /** Set when an announcement is due before the speech engine has finished starting up. */
     private var announcePending = false
 
+    /** Utterances still to finish before the wake lock can go. */
+    private var pendingUtterances = 0
+
     /** Announcing once on start is what tells the user the app is actually working. */
     private var greeted = false
 
@@ -55,7 +58,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Promote to the foreground before anything else: Android gives a started service only a
         // few seconds to do this before killing it.
-        startForegroundWithNotification(nextMark(LocalTime.now(), Prefs.intervalMinutes(this)))
+        startForegroundWithNotification(nextSpokenMark(Prefs.intervalMinutes(this)))
 
         when (intent?.action) {
             ACTION_STOP -> {
@@ -129,6 +132,13 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         val now = LocalTime.now()
         val interval = Prefs.intervalMinutes(this)
 
+        // A quarter hour that is also an ordinary mark is announced once, as a major - saying it
+        // twice over would be worse than either.
+        if (Prefs.majorEnabled(this) && now.minute % Prefs.MAJOR_INTERVAL_MINUTES == 0) {
+            announceMajor(now)
+            return
+        }
+
         if (now.minute % interval == 0) {
             announce()
             return
@@ -156,18 +166,34 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         if (feedback.speaks) speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAIN)
     }
 
+    /** The quarter-hour announcement: its own voice, and the time repeated. */
+    private fun announceMajor(time: LocalTime) {
+        val feedback = Prefs.announcementFeedback(this)
+        if (feedback.vibrates) vibrate()
+        if (!feedback.speaks) return
+
+        if (!ttsReady) {
+            announcePending = true
+            return
+        }
+        speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAJOR, Prefs.majorRepeats(this))
+    }
+
     private fun vibrate() {
         Vibration.buzz(this, Prefs.vibrationMillis(this).toLong())
     }
 
-    private fun speakText(text: String, profile: SpeechProfile) {
+    private fun speakText(text: String, profile: SpeechProfile, repeats: Int = 1) {
         val engine = tts ?: return
         if (!ttsReady) return
 
-        // Keep the CPU alive for the utterance; with the screen off the device would otherwise
+        // Keep the CPU alive for the utterances; with the screen off the device would otherwise
         // doze off mid-sentence. The timeout is a backstop in case onDone never arrives.
         acquireWakeLock()
-        output.speak(engine, text, UTTERANCE_ID, profile)
+        // Counted, so a repeated announcement does not release the wake lock after its first
+        // utterance and fall asleep partway through.
+        pendingUtterances = repeats.coerceAtLeast(1)
+        output.speak(engine, text, UTTERANCE_ID, profile, repeats)
         boostUnsupported = output.boostUnsupported
     }
 
@@ -179,7 +205,14 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
         // Dated rather than time-of-day arithmetic, so the 23:55 mark rolls into 00:00 tomorrow
         // instead of scheduling an alarm nearly a day in the past.
-        val next = nextMark(LocalDateTime.now(), step)
+        val now = LocalDateTime.now()
+        var next = nextMark(now, step)
+        if (Prefs.majorEnabled(this)) {
+            // Quarter hours are not necessarily interval marks - at an interval of 10, :15 and
+            // :45 are not - so the alarm has to be pulled forward to catch them.
+            val nextMajor = nextMark(now, Prefs.MAJOR_INTERVAL_MINUTES)
+            if (nextMajor.isBefore(next)) next = nextMajor
+        }
         val alarms = getSystemService(AlarmManager::class.java)
         val triggerAt = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
@@ -187,7 +220,17 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // exactly the state the phone is in when it is locked on a desk.
         alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, announcePendingIntent())
 
-        notificationManager().notify(NOTIFICATION_ID, buildNotification(nextMark(LocalTime.now(), interval)))
+        notificationManager().notify(NOTIFICATION_ID, buildNotification(nextSpokenMark(interval)))
+    }
+
+    /** The next time something is actually announced: an interval mark or a quarter hour. */
+    private fun nextSpokenMark(interval: Int): LocalTime {
+        val now = LocalTime.now()
+        val ordinary = nextMark(now, interval)
+        if (!Prefs.majorEnabled(this)) return ordinary
+
+        val major = nextMark(now, Prefs.MAJOR_INTERVAL_MINUTES)
+        return if (major.isBefore(ordinary)) major else ordinary
     }
 
     private fun announcePendingIntent(): PendingIntent = PendingIntent.getService(
@@ -207,6 +250,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun finishUtterance() {
+        if (--pendingUtterances > 0) return
         output.release()
         releaseWakeLock()
     }
