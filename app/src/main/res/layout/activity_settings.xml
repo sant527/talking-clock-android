@@ -199,13 +199,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/sameVoiceSwitch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/countdown_same_voice"
-                    android:textColor="?android:attr/textColorPrimary" />
 
                 <include
                     android:id="@+id/countdownStyle"
@@ -282,17 +275,6 @@
                     layout="@layout/section_style" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Shown instead of the voice controls when the countdown borrows the main voice. -->
-        <TextView
-            android:id="@+id/sharedVoiceNote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/shared_voice_note"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="14sp"
-            android:visibility="gone" />
 
         <!-- ===== the selected announcement's voice ===== -->
 

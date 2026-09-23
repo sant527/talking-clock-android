@@ -31,10 +31,9 @@ class SpeechOutput(private val context: Context) {
         engine: TextToSpeech,
         text: String,
         utteranceId: String,
-        requestedProfile: SpeechProfile = SpeechProfile.MAIN,
+        profile: SpeechProfile = SpeechProfile.MAIN,
         repeats: Int = 1
     ) {
-        val profile = Prefs.effectiveProfile(context, requestedProfile)
         VoiceSettings.applyTo(engine, context, profile)
 
         val percent = Prefs.volumePercent(context, profile)

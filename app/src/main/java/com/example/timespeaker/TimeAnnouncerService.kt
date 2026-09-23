@@ -134,7 +134,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
         // A quarter hour that is also an ordinary mark is announced once, as a major - saying it
         // twice over would be worse than either.
-        if (Prefs.majorEnabled(this) && now.minute % Prefs.majorIntervalMinutes(this) == 0) {
+        if (Prefs.majorEnabled(this) && isMark(now, Prefs.majorIntervalMinutes(this))) {
             announceMajor(now)
             return
         }
@@ -150,7 +150,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // mode it simply says nothing.
         if (!Prefs.announcementFeedback(this).speaks) return
 
-        val remaining = interval - (now.minute % interval)
+        val remaining = interval - (minuteOfDay(now.hour, now.minute) % interval)
         if (ttsReady) {
             speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN, Prefs.speakRepeats(this, SpeechProfile.COUNTDOWN))
         } else {
@@ -412,13 +412,27 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
         /** The next wall-clock mark strictly after [from], for an [interval]-minute step. */
         fun nextMark(from: LocalTime, interval: Int): LocalTime =
-            from.plusMinutes(minutesToNextMark(from.minute, interval)).withSecond(0).withNano(0)
+            from.plusMinutes(minutesToNextMark(minuteOfDay(from.hour, from.minute), interval))
+                .withSecond(0).withNano(0)
 
         fun nextMark(from: LocalDateTime, interval: Int): LocalDateTime =
-            from.plusMinutes(minutesToNextMark(from.minute, interval)).withSecond(0).withNano(0)
+            from.plusMinutes(minutesToNextMark(minuteOfDay(from.hour, from.minute), interval))
+                .withSecond(0).withNano(0)
 
-        private fun minutesToNextMark(minute: Int, interval: Int): Long =
-            (interval - (minute % interval)).toLong()
+        /**
+         * Marks are counted from midnight, not from the top of the hour.
+         *
+         * Every interval offered divides a whole day, so this keeps them aligned; counting within
+         * the hour would break anything longer than 60 minutes, where a two-hour interval would
+         * match minute zero of every hour and fire twice as often as asked.
+         */
+        fun minuteOfDay(hour: Int, minute: Int): Int = hour * 60 + minute
+
+        fun isMark(time: LocalTime, interval: Int): Boolean =
+            minuteOfDay(time.hour, time.minute) % interval == 0
+
+        private fun minutesToNextMark(minuteOfDay: Int, interval: Int): Long =
+            (interval - (minuteOfDay % interval)).toLong()
 
         private fun intentFor(context: Context, action: String?): Intent =
             Intent(context, TimeAnnouncerService::class.java).also { it.action = action }

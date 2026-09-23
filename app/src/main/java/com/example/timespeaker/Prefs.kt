@@ -15,7 +15,6 @@ object Prefs {
     private const val KEY_PITCH = "announcement_pitch"
     private const val KEY_RATE = "announcement_rate"
     private const val KEY_VOICE = "announcement_voice"
-    private const val KEY_COUNTDOWN_SAME_VOICE = "countdown_same_voice"
     private const val KEY_FEEDBACK = "announcement_feedback"
     private const val KEY_VIBRATION_MS = "vibration_millis"
     private const val KEY_INTERVAL_ENABLED = "interval_enabled"
@@ -40,8 +39,14 @@ object Prefs {
     /** Major announcements land on their own marks, independent of the ordinary interval. */
     const val DEFAULT_MAJOR_INTERVAL_MINUTES = 15
 
-    /** All divide 60, so major marks stay aligned to the top of the hour. */
-    val MAJOR_INTERVAL_CHOICES = listOf(10, 15, 20, 30, 60)
+    /**
+     * All divide a whole day, so major marks stay aligned to midnight rather than drifting.
+     *
+     * Two of them do not divide an hour: 45 minutes lands at 00:45, 01:30, 02:15, 03:00, and
+     * 120 and 180 are longer than an hour outright. That is why marks are counted from midnight
+     * rather than from the top of the hour.
+     */
+    val MAJOR_INTERVAL_CHOICES = listOf(10, 15, 20, 30, 45, 60, 120, 180)
     const val DEFAULT_MAJOR_REPEATS = 3
     const val MIN_REPEATS = 1
     const val MAX_SPEAK_REPEATS = 5
@@ -103,29 +108,6 @@ object Prefs {
             if (name == null) remove(k) else putString(k, name)
         }.apply()
     }
-
-    /** Whether the countdown borrows the announcements' voice, volume, pitch and speed. */
-    fun countdownUsesMainVoice(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_COUNTDOWN_SAME_VOICE, true)
-
-    fun setCountdownUsesMainVoice(context: Context, same: Boolean) {
-        prefs(context).edit().putBoolean(KEY_COUNTDOWN_SAME_VOICE, same).apply()
-    }
-
-    /**
-     * The profile whose settings actually apply for [requested].
-     *
-     * Resolved in one place so nothing has to remember to check the "same voice" switch — asking
-     * for the countdown profile simply gives back the main one while that switch is on.
-     */
-    fun effectiveProfile(context: Context, requested: SpeechProfile): SpeechProfile =
-        if (requested == SpeechProfile.COUNTDOWN && countdownUsesMainVoice(context)) {
-            SpeechProfile.MAIN
-        } else {
-            requested
-        }
-
-    private fun key(base: String, profile: SpeechProfile): String = base + profile.keySuffix
 
     /**
      * The Male/Female tag the user put on a voice, or null if untagged.
@@ -296,6 +278,9 @@ object Prefs {
     fun setOrientation(context: Context, orientation: ScreenOrientation) {
         prefs(context).edit().putString(KEY_ORIENTATION, orientation.key).apply()
     }
+
+    /** Per-announcement settings share a base key and differ by the profile's suffix. */
+    private fun key(base: String, profile: SpeechProfile): String = base + profile.keySuffix
 
     private fun tone(context: Context, key: String, fallback: Int): Int =
         prefs(context).getInt(key, fallback).coerceIn(MIN_TONE_PERCENT, MAX_TONE_PERCENT)

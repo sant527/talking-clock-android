@@ -258,9 +258,21 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             getString(R.string.interval_hint, clockExamples(Prefs.intervalMinutes(this)))
     }
 
-    /** The first three marks of an hour at [minutes], e.g. "7:00, 7:15, 7:30". */
-    private fun clockExamples(minutes: Int): String = (0..2).joinToString(", ") { step ->
-        EXAMPLE_FORMAT.format(LocalTime.of(7, 0).plusMinutes((step * minutes).toLong()))
+    /**
+     * Three real marks, e.g. "7:00, 7:15, 7:30" — or "8:00, 10:00, 12:00" at two hours.
+     *
+     * Started from the first genuine mark at or after 7am rather than from 7am itself, because
+     * a two-hour interval does not land on odd hours and the examples would be wrong.
+     */
+    private fun clockExamples(minutes: Int): String {
+        val morning = 7 * 60
+        val remainder = morning % minutes
+        val firstMark = if (remainder == 0) morning else morning + (minutes - remainder)
+
+        return (0..2).joinToString(", ") { step ->
+            val mark = (firstMark + step * minutes) % (24 * 60)
+            EXAMPLE_FORMAT.format(LocalTime.of(mark / 60, mark % 60))
+        }
     }
 
     /**
@@ -276,14 +288,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun setUpCountdownSwitch() {
-        binding.sameVoiceSwitch.isChecked = Prefs.countdownUsesMainVoice(this)
-        binding.sameVoiceSwitch.setOnCheckedChangeListener { _, same ->
-            Prefs.setCountdownUsesMainVoice(this, same)
-            // Editing a voice that is no longer in use would be confusing, so fall back to the
-            // announcements one whenever the countdown stops having its own.
-            refreshCountdownAvailability()
-            refreshSelectedSection()
-        }
 
         refreshCountdownAvailability()
     }
@@ -380,8 +384,9 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         profileRadios.forEach { (candidate, radio) -> radio.isChecked = candidate == which }
         refreshSelectedSection()
         loadProfileIntoControls()
+        // Deliberately no scroll: switching announcements should leave you where you were,
+        // not throw you back to the top of the screen.
         if (ttsReady) renderVoices()
-        binding.scrollRoot.post { binding.scrollRoot.scrollTo(0, 0) }
     }
 
     /**
@@ -395,10 +400,8 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.countdownSection.visibility = visibleIf(profile == SpeechProfile.COUNTDOWN)
         binding.majorSection.visibility = visibleIf(profile == SpeechProfile.MAJOR)
 
-        val borrowsMainVoice =
-            profile == SpeechProfile.COUNTDOWN && Prefs.countdownUsesMainVoice(this)
-        binding.voiceBlock.visibility = visibleIf(!borrowsMainVoice)
-        binding.sharedVoiceNote.visibility = visibleIf(borrowsMainVoice)
+        // Every announcement has a voice of its own, so the controls always apply.
+        binding.voiceBlock.visibility = View.VISIBLE
     }
 
     private fun visibleIf(condition: Boolean): Int = if (condition) View.VISIBLE else View.GONE
@@ -429,7 +432,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // The voice switch and the profile tabs are only meaningful while a countdown is running
         // with settings of its own.
         val counting = usable && Prefs.countdownEnabled(this)
-        binding.sameVoiceSwitch.isEnabled = counting
     }
 
     private fun setUpThemePicker() {

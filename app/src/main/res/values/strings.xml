@@ -19,7 +19,7 @@
     <string name="notification_title">Time Speaker is running</string>
     <string name="notification_stop">Stop</string>
 
-    <string name="settings">Voice &amp; volume</string>
+    <string name="settings">Settings</string>
     <string name="volume_label">Volume: %1$d%%</string>
     <string name="volume_label_boosted">Volume: %1$d%% (boosted)</string>
     <string name="boost_note">Above 100% the announcement is amplified past the device\'s media volume. Music and other apps are unaffected.</string>
@@ -74,7 +74,6 @@
     <string name="interval_hint">Announces on the clock, not counting from now — %1$s and so on.</string>
     <string name="countdown_needs_interval_off">Interval announcements are off, so there is nothing to count down to.</string>
     <string name="tagline_major_only">Announces the quarter hours</string>
-    <string name="shared_voice_note">The countdown is using the announcements\' voice, volume and speed. Switch off “Use the same voice” above to give it its own.</string>
     <string name="status_nothing_enabled">Nothing is switched on</string>
     <string name="interval_minutes">minutes</string>
     <string name="feedback_heading">Style</string>
@@ -94,8 +93,6 @@
     <string name="countdown_heading">Countdown</string>
     <string name="countdown_switch">Count down the minutes in between</string>
     <string name="countdown_explainer">On every minute between announcements, speak only the number of minutes left — at 7:51 with a five-minute interval it says “four”.</string>
-    <string name="countdown_same_voice">Use the same voice for the countdown</string>
-    <string name="countdown_own_voice_hint">The countdown has its own voice, volume, pitch and speed. Pick which one you are editing below.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
     <string name="editing_profile">Which announcement</string>
