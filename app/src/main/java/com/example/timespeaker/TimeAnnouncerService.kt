@@ -58,7 +58,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Promote to the foreground before anything else: Android gives a started service only a
         // few seconds to do this before killing it.
-        startForegroundWithNotification(nextSpokenMark(Prefs.intervalMinutes(this)))
+        startForegroundWithNotification()
 
         when (intent?.action) {
             ACTION_STOP -> {
@@ -134,7 +134,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
         // A quarter hour that is also an ordinary mark is announced once, as a major - saying it
         // twice over would be worse than either.
-        if (Prefs.majorEnabled(this) && now.minute % Prefs.MAJOR_INTERVAL_MINUTES == 0) {
+        if (Prefs.majorEnabled(this) && now.minute % Prefs.majorIntervalMinutes(this) == 0) {
             announceMajor(now)
             return
         }
@@ -151,7 +151,11 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         if (!Prefs.announcementFeedback(this).speaks) return
 
         val remaining = interval - (now.minute % interval)
-        if (ttsReady) speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN) else announcePending = true
+        if (ttsReady) {
+            speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN, Prefs.speakRepeats(this, SpeechProfile.COUNTDOWN))
+        } else {
+            announcePending = true
+        }
     }
 
     /**
@@ -161,26 +165,30 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
      * vibrates.
      */
     private fun speak(time: LocalTime) {
-        val feedback = Prefs.announcementFeedback(this)
-        if (feedback.vibrates) vibrate()
-        if (feedback.speaks) speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAIN)
+        val feedback = Prefs.announcementFeedback(this, SpeechProfile.MAIN)
+        if (feedback.vibrates) vibrate(SpeechProfile.MAIN)
+        if (feedback.speaks) speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAIN, Prefs.speakRepeats(this, SpeechProfile.MAIN))
     }
 
     /** The quarter-hour announcement: its own voice, and the time repeated. */
     private fun announceMajor(time: LocalTime) {
-        val feedback = Prefs.announcementFeedback(this)
-        if (feedback.vibrates) vibrate()
+        val feedback = Prefs.announcementFeedback(this, SpeechProfile.MAJOR)
+        if (feedback.vibrates) vibrate(SpeechProfile.MAJOR)
         if (!feedback.speaks) return
 
         if (!ttsReady) {
             announcePending = true
             return
         }
-        speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAJOR, Prefs.majorRepeats(this))
+        speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAJOR, Prefs.speakRepeats(this, SpeechProfile.MAJOR))
     }
 
-    private fun vibrate() {
-        Vibration.buzz(this, Prefs.vibrationMillis(this).toLong())
+    private fun vibrate(profile: SpeechProfile) {
+        Vibration.buzz(
+            this,
+            Prefs.vibrationMillis(this, profile).toLong(),
+            Prefs.vibrationRepeats(this, profile)
+        )
     }
 
     private fun speakText(text: String, profile: SpeechProfile, repeats: Int = 1) {
@@ -206,14 +214,21 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // Dated rather than time-of-day arithmetic, so the 23:55 mark rolls into 00:00 tomorrow
         // instead of scheduling an alarm nearly a day in the past.
         val now = LocalDateTime.now()
-        var next = nextMark(now, step)
+        var next: LocalDateTime? = if (Prefs.intervalEnabled(this)) nextMark(now, step) else null
         if (Prefs.majorEnabled(this)) {
             // Quarter hours are not necessarily interval marks - at an interval of 10, :15 and
             // :45 are not - so the alarm has to be pulled forward to catch them.
-            val nextMajor = nextMark(now, Prefs.MAJOR_INTERVAL_MINUTES)
-            if (nextMajor.isBefore(next)) next = nextMajor
+            val nextMajor = nextMark(now, Prefs.majorIntervalMinutes(this))
+            if (next == null || nextMajor.isBefore(next)) next = nextMajor
         }
+
         val alarms = getSystemService(AlarmManager::class.java)
+        if (next == null) {
+            // Everything is switched off: cancel the pending alarm rather than waking for nothing.
+            alarms.cancel(announcePendingIntent())
+            notificationManager().notify(NOTIFICATION_ID, buildIdleNotification())
+            return
+        }
         val triggerAt = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         // setExactAndAllowWhileIdle is the only scheduling call that survives Doze, which is
@@ -226,11 +241,13 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     /** The next time something is actually announced: an interval mark or a quarter hour. */
     private fun nextSpokenMark(interval: Int): LocalTime {
         val now = LocalTime.now()
-        val ordinary = nextMark(now, interval)
-        if (!Prefs.majorEnabled(this)) return ordinary
+        val ordinary = if (Prefs.intervalEnabled(this)) nextMark(now, interval) else null
+        val major = if (Prefs.majorEnabled(this)) nextMark(now, Prefs.majorIntervalMinutes(this)) else null
 
-        val major = nextMark(now, Prefs.MAJOR_INTERVAL_MINUTES)
-        return if (major.isBefore(ordinary)) major else ordinary
+        return when {
+            ordinary != null && major != null -> if (major.isBefore(ordinary)) major else ordinary
+            else -> ordinary ?: major ?: now
+        }
     }
 
     private fun announcePendingIntent(): PendingIntent = PendingIntent.getService(
@@ -260,8 +277,12 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         wakeLock = null
     }
 
-    private fun startForegroundWithNotification(next: LocalTime) {
-        val notification = buildNotification(next)
+    private fun startForegroundWithNotification() {
+        val notification = if (Prefs.anythingEnabled(this)) {
+            buildNotification(nextSpokenMark(Prefs.intervalMinutes(this)))
+        } else {
+            buildIdleNotification()
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
@@ -269,7 +290,16 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun buildNotification(next: LocalTime): Notification {
+    /** Shown when every section is switched off, so the notification does not promise a time. */
+    private fun buildIdleNotification(): Notification =
+        baseNotification().setContentText(getString(R.string.status_nothing_enabled)).build()
+
+    private fun buildNotification(next: LocalTime): Notification =
+        baseNotification()
+            .setContentText(getString(R.string.status_next, NOTIFICATION_FORMAT.format(next)))
+            .build()
+
+    private fun baseNotification(): NotificationCompat.Builder {
         val openApp = PendingIntent.getActivity(
             this,
             REQUEST_OPEN,
@@ -286,14 +316,12 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.status_next, NOTIFICATION_FORMAT.format(next)))
             .setContentIntent(openApp)
             .addAction(0, getString(R.string.notification_stop), stop)
             .setOngoing(true)
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .build()
     }
 
     private fun createNotificationChannel() {

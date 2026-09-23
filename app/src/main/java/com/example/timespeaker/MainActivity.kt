@@ -136,7 +136,12 @@ class MainActivity : AppCompatActivity() {
     private fun refreshControls(now: LocalTime) {
         val running = TimeAnnouncerService.isRunning
         val interval = Prefs.intervalMinutes(this)
-        binding.taglineText.text = resources.getQuantityString(R.plurals.tagline, interval, interval)
+        binding.taglineText.text = when {
+            Prefs.intervalEnabled(this) ->
+                resources.getQuantityString(R.plurals.tagline, interval, interval)
+            Prefs.majorEnabled(this) -> getString(R.string.tagline_major_only)
+            else -> getString(R.string.status_nothing_enabled)
+        }
 
         binding.toggleSpeechButton.setText(
             if (running) R.string.speaking_on else R.string.speaking_off
@@ -146,13 +151,30 @@ class MainActivity : AppCompatActivity() {
 
         binding.statusText.text = when {
             TimeAnnouncerService.ttsFailed -> getString(R.string.status_tts_failed)
+            running && !Prefs.anythingEnabled(this) -> getString(R.string.status_nothing_enabled)
             running -> getString(
                 R.string.status_next,
-                STATUS_FORMAT.format(
-                    TimeAnnouncerService.nextMark(now, Prefs.intervalMinutes(this))
-                )
+                STATUS_FORMAT.format(nextSpokenMark(now))
             )
             else -> getString(R.string.status_muted)
+        }
+    }
+
+    /** Mirrors the service's own choice, so the screen and the notification agree. */
+    private fun nextSpokenMark(now: LocalTime): LocalTime {
+        val ordinary = if (Prefs.intervalEnabled(this)) {
+            TimeAnnouncerService.nextMark(now, Prefs.intervalMinutes(this))
+        } else {
+            null
+        }
+        val major = if (Prefs.majorEnabled(this)) {
+            TimeAnnouncerService.nextMark(now, Prefs.majorIntervalMinutes(this))
+        } else {
+            null
+        }
+        return when {
+            ordinary != null && major != null -> if (major.isBefore(ordinary)) major else ordinary
+            else -> ordinary ?: major ?: now
         }
     }
 

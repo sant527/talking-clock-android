@@ -35,146 +35,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/interval_heading" />
-
-        <!-- Scrollable: six choices plus their unit do not fit across a phone. -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/intervalGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:selectionRequired="true"
-                    app:singleSelection="true" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="@string/interval_minutes"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-        </HorizontalScrollView>
-
-        <TextView
-            style="@style/SettingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/feedback_heading" />
-
-        <!-- A vertical list, not a toggle row: "Speak + vibrate" and "Vibrate only" cannot both
-             fit across a phone, and a clipped label is worse than an extra line. -->
-        <RadioGroup
-            android:id="@+id/feedbackGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="vertical">
-
-            <RadioButton
-                android:id="@+id/feedbackSpeakButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/feedback_speak"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="15sp" />
-
-            <RadioButton
-                android:id="@+id/feedbackBothButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/feedback_both"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="15sp" />
-
-            <RadioButton
-                android:id="@+id/feedbackVibrateButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/feedback_vibrate"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="15sp" />
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/feedback_hint"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp" />
-
-        <TextView
-            android:id="@+id/vibrationLabel"
-            style="@style/SettingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
-        <com.google.android.material.slider.Slider
-            android:id="@+id/vibrationSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stepSize="500"
-            android:valueFrom="500"
-            android:valueTo="10000"
-            android:visibility="gone"
-            app:labelBehavior="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/vibrationTestButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/vibration_test"
-            android:visibility="gone"
-            app:cornerRadius="14dp" />
-
-        <TextView
-            style="@style/SettingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/countdown_heading" />
-
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/countdownSwitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/countdown_switch"
-            android:textColor="?android:attr/textColorPrimary" />
-
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/sameVoiceSwitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/countdown_same_voice"
-            android:textColor="?android:attr/textColorPrimary" />
-
-        <TextView
-            android:id="@+id/countdownExplainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/countdown_explainer"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp" />
-
-        <TextView
-            style="@style/SettingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:text="@string/theme_heading" />
 
         <LinearLayout
@@ -217,69 +77,251 @@
                 android:text="@string/clock_analog" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
+        <!-- The selector is the screen's spine: everything below it belongs to whichever
+             announcement is picked here. All three are always listed, because this is also how
+             you reach a switched-off one to turn it back on. -->
         <TextView
             style="@style/SettingLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/major_heading" />
+            android:text="@string/editing_profile" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/majorSwitch"
+        <RadioGroup
+            android:id="@+id/profileGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/major_switch"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:layout_marginTop="2dp"
+            android:orientation="vertical" />
 
-        <TextView
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/major_hint"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp" />
+            android:layout_height="1dp"
+            android:layout_marginTop="20dp"
+            android:background="?android:attr/textColorSecondary"
+            android:alpha="0.25" />
 
-        <TextView
-            android:id="@+id/majorRepeatsLabel"
-            style="@style/SettingLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
+        <!-- ===== the selected announcement's own settings ===== -->
 
-        <com.google.android.material.slider.Slider
-            android:id="@+id/majorRepeatsSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stepSize="1"
-            android:valueFrom="1"
-            android:valueTo="5"
-            android:visibility="gone"
-            app:labelBehavior="gone" />
-
-        <!-- Built in code: which voices exist depends on whether the countdown and major
-             announcements are on. A vertical list because three labels will not fit a row. -->
         <LinearLayout
-            android:id="@+id/profileRow"
+            android:id="@+id/intervalSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SettingLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/interval_heading" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/intervalSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/interval_switch"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <TextView
+                android:id="@+id/intervalHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/intervalBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:text="@string/interval_every"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp" />
+
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/intervalGroup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:selectionRequired="true"
+                            app:singleSelection="true" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/interval_minutes"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <include
+                    android:id="@+id/intervalStyle"
+                    layout="@layout/section_style" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/countdownSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:text="@string/editing_profile"
-                android:textAllCaps="true"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
-
-            <RadioGroup
-                android:id="@+id/profileGroup"
+                style="@style/SettingLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:text="@string/countdown_heading" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/countdownSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/countdown_switch"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <TextView
+                android:id="@+id/countdownExplainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/countdown_explainer"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/countdownBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/sameVoiceSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/countdown_same_voice"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <include
+                    android:id="@+id/countdownStyle"
+                    layout="@layout/section_style" />
+            </LinearLayout>
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/majorSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/SettingLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/major_heading" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/majorSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/major_switch"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <TextView
+                android:id="@+id/majorHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:id="@+id/majorBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:text="@string/interval_every"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp" />
+
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/majorIntervalGroup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:selectionRequired="true"
+                            app:singleSelection="true" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/interval_minutes"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <include
+                    android:id="@+id/majorStyle"
+                    layout="@layout/section_style" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Shown instead of the voice controls when the countdown borrows the main voice. -->
+        <TextView
+            android:id="@+id/sharedVoiceNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/shared_voice_note"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <!-- ===== the selected announcement's voice ===== -->
+
+        <LinearLayout
+            android:id="@+id/voiceBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <TextView
             android:id="@+id/volumeLabel"
@@ -468,7 +510,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/reset_defaults" />
-
+        </LinearLayout>
     </LinearLayout>
     </ScrollView>
 </LinearLayout>

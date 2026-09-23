@@ -44,8 +44,10 @@ Full screen hides the system bars and fills the display, in portrait or landscap
 - **Countdown**: optionally speaks the minutes remaining on each minute in between
   ("four", "three", "two", "one"), with its own voice/volume or shared with the
   announcements
-- **Major announcement**: a stronger marker on the quarter hours (:00, :15, :30, :45),
-  repeating the time 1–5 times, with its own voice and volume
+- **Major announcement**: a stronger marker on its own interval (10, 15, 20, 30 or 60
+  minutes), repeating the time, with its own voice and volume
+- **Three independent announcements** — interval, countdown and major — each with its
+  own on/off switch, style, repeat counts and voice
 - **Announcement style**: Speak, Speak + vibrate, or **Vibrate only** — a silent
   mode for when nobody should be woken. Vibration length is adjustable from 0.5 to
   10 seconds, with a test button

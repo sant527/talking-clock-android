@@ -10,9 +10,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.timespeaker.databinding.ActivitySettingsBinding
 import com.example.timespeaker.databinding.ItemVoiceBinding
+import com.example.timespeaker.databinding.SectionStyleBinding
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
@@ -48,9 +50,16 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         lockToPortrait()
 
         setUpIntervalPicker()
-        setUpFeedbackPicker()
+        bindStyleSection(binding.intervalStyle, SpeechProfile.MAIN)
+        bindStyleSection(binding.countdownStyle, SpeechProfile.COUNTDOWN)
+        bindStyleSection(binding.majorStyle, SpeechProfile.MAJOR)
         setUpCountdownSwitch()
         setUpMajorControls()
+        // Reflect the stored switch positions on open; until now this only ran when a switch
+        // was touched, so a section that was off still showed all its controls.
+        updateIntervalHint()
+        updateMajorHint()
+        refreshSectionBodies()
         refreshProfileSwitcher()
         setUpThemePicker()
         setUpClockStylePicker()
@@ -84,6 +93,15 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun setUpIntervalPicker() {
+        binding.intervalSwitch.isChecked = Prefs.intervalEnabled(this)
+        binding.intervalSwitch.setOnCheckedChangeListener { _, enabled ->
+            Prefs.setIntervalEnabled(this, enabled)
+            TimeAnnouncerService.reschedule(this)
+            refreshSectionBodies()
+            refreshCountdownAvailability()
+            refreshProfileSwitcher()
+        }
+
         val current = Prefs.intervalMinutes(this)
 
         Prefs.INTERVAL_CHOICES.forEach { minutes ->
@@ -103,79 +121,160 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val minutes = group.findViewById<MaterialButton>(checkedId)?.tag as? Int
                 ?: return@addOnButtonCheckedListener
             Prefs.setIntervalMinutes(this, minutes)
+            updateIntervalHint()
             // The alarm already in flight was set for the old interval; move it.
             TimeAnnouncerService.reschedule(this)
             refreshCountdownAvailability()
         }
     }
 
-    private fun setUpFeedbackPicker() {
-        binding.feedbackGroup.check(buttonFor(Prefs.announcementFeedback(this)))
-        binding.feedbackGroup.setOnCheckedChangeListener { _, checkedId ->
-            Prefs.setAnnouncementFeedback(this, feedbackFor(checkedId))
-            refreshVibrationControls()
+    /**
+     * Wires one section's style block: speak/vibrate choice, vibration length and test.
+     *
+     * One function for all three sections, because they behave identically and only differ in
+     * which profile they store under.
+     */
+    private fun bindStyleSection(section: SectionStyleBinding, profile: SpeechProfile) {
+        section.styleGroup.check(styleButtonFor(section, Prefs.announcementFeedback(this, profile)))
+        section.styleGroup.setOnCheckedChangeListener { _, checkedId ->
+            Prefs.setAnnouncementFeedback(this, styleFor(section, checkedId), profile)
+            refreshStyleSection(section, profile)
         }
 
-        binding.vibrationSlider.value = Prefs.vibrationMillis(this).toFloat()
-        binding.vibrationSlider.addOnChangeListener { _, value, fromUser ->
+        section.vibrationSlider.value = Prefs.vibrationMillis(this, profile).toFloat()
+        section.vibrationSlider.addOnChangeListener { _, value, fromUser ->
             if (!fromUser) return@addOnChangeListener
-            Prefs.setVibrationMillis(this, value.toInt())
-            updateVibrationLabel()
+            Prefs.setVibrationMillis(this, value.toInt(), profile)
+            updateVibrationLabel(section, profile)
         }
-        binding.vibrationSlider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+        section.vibrationSlider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: Slider) = Unit
             // Feeling the length you just chose is the only way to judge it.
-            override fun onStopTrackingTouch(slider: Slider) = previewVibration()
+            override fun onStopTrackingTouch(slider: Slider) = previewVibration(section, profile)
         })
 
-        binding.vibrationTestButton.setOnClickListener { previewVibration() }
+        section.speakRepeatsSlider.value = Prefs.speakRepeats(this, profile).toFloat()
+        section.speakRepeatsSlider.addOnChangeListener { _, value, fromUser ->
+            if (!fromUser) return@addOnChangeListener
+            Prefs.setSpeakRepeats(this, value.toInt(), profile)
+            updateRepeatLabels(section, profile)
+        }
 
-        refreshVibrationControls()
+        section.vibrationRepeatsSlider.value = Prefs.vibrationRepeats(this, profile).toFloat()
+        section.vibrationRepeatsSlider.addOnChangeListener { _, value, fromUser ->
+            if (!fromUser) return@addOnChangeListener
+            Prefs.setVibrationRepeats(this, value.toInt(), profile)
+            updateRepeatLabels(section, profile)
+        }
+        section.vibrationRepeatsSlider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) = Unit
+            override fun onStopTrackingTouch(slider: Slider) = previewVibration(section, profile)
+        })
+
+        section.vibrationTestButton.setOnClickListener { previewVibration(section, profile) }
+
+        refreshStyleSection(section, profile)
     }
 
-    private fun buttonFor(feedback: AnnouncementFeedback): Int = when (feedback) {
-        AnnouncementFeedback.SPEAK -> binding.feedbackSpeakButton.id
-        AnnouncementFeedback.SPEAK_AND_VIBRATE -> binding.feedbackBothButton.id
-        AnnouncementFeedback.VIBRATE_ONLY -> binding.feedbackVibrateButton.id
+    private fun styleButtonFor(section: SectionStyleBinding, feedback: AnnouncementFeedback): Int =
+        when (feedback) {
+            AnnouncementFeedback.SPEAK -> section.styleSpeak.id
+            AnnouncementFeedback.SPEAK_AND_VIBRATE -> section.styleBoth.id
+            AnnouncementFeedback.VIBRATE_ONLY -> section.styleVibrate.id
+        }
+
+    private fun styleFor(section: SectionStyleBinding, buttonId: Int): AnnouncementFeedback =
+        when (buttonId) {
+            section.styleBoth.id -> AnnouncementFeedback.SPEAK_AND_VIBRATE
+            section.styleVibrate.id -> AnnouncementFeedback.VIBRATE_ONLY
+            else -> AnnouncementFeedback.SPEAK
+        }
+
+    /** The length control only means anything when that section actually vibrates. */
+    /**
+     * All three counts stay on screen whatever the style is.
+     *
+     * They were hidden when the style did not use them, but a control that appears and vanishes
+     * as you change a radio button above it is harder to find than one that is simply always
+     * there. They take effect only when the style calls for them.
+     */
+    private fun refreshStyleSection(section: SectionStyleBinding, profile: SpeechProfile) {
+        section.speakRepeatsLabel.visibility = View.VISIBLE
+        section.speakRepeatsSlider.visibility = View.VISIBLE
+        section.vibrationLabel.visibility = View.VISIBLE
+        section.vibrationSlider.visibility = View.VISIBLE
+        section.vibrationRepeatsLabel.visibility = View.VISIBLE
+        section.vibrationRepeatsSlider.visibility = View.VISIBLE
+        section.vibrationTestButton.visibility = View.VISIBLE
+
+        updateVibrationLabel(section, profile)
+        updateRepeatLabels(section, profile)
     }
 
-    private fun feedbackFor(buttonId: Int): AnnouncementFeedback = when (buttonId) {
-        binding.feedbackBothButton.id -> AnnouncementFeedback.SPEAK_AND_VIBRATE
-        binding.feedbackVibrateButton.id -> AnnouncementFeedback.VIBRATE_ONLY
-        else -> AnnouncementFeedback.SPEAK
+    private fun updateRepeatLabels(section: SectionStyleBinding, profile: SpeechProfile) {
+        val says = Prefs.speakRepeats(this, profile)
+        section.speakRepeatsLabel.text =
+            resources.getQuantityString(R.plurals.speak_repeats_label, says, says)
+
+        val buzzes = Prefs.vibrationRepeats(this, profile)
+        section.vibrationRepeatsLabel.text =
+            resources.getQuantityString(R.plurals.vibration_repeats_label, buzzes, buzzes)
     }
 
-    /** The length control is only meaningful when something actually vibrates. */
-    private fun refreshVibrationControls() {
-        val vibrates = Prefs.announcementFeedback(this).vibrates
-        val visibility = if (vibrates) View.VISIBLE else View.GONE
-        binding.vibrationLabel.visibility = visibility
-        binding.vibrationSlider.visibility = visibility
-        binding.vibrationTestButton.visibility = visibility
-        if (vibrates) updateVibrationLabel()
-    }
-
-    private fun updateVibrationLabel() {
-        val seconds = Prefs.vibrationMillis(this) / 1000f
-        binding.vibrationLabel.text = getString(R.string.vibration_label, SECONDS_FORMAT.format(seconds))
+    private fun updateVibrationLabel(section: SectionStyleBinding, profile: SpeechProfile) {
+        val seconds = Prefs.vibrationMillis(this, profile) / 1000f
+        section.vibrationLabel.text =
+            getString(R.string.vibration_label, SECONDS_FORMAT.format(seconds))
     }
 
     /**
      * Buzzes for the chosen length, and says so while it runs.
      *
-     * At the long end of the slider a silent button would look broken — ten seconds is long
+     * At the long end of the slider a silent button would look broken - ten seconds is long
      * enough that you need telling something is happening.
      */
-    private fun previewVibration() {
-        val millis = Prefs.vibrationMillis(this).toLong()
-        Vibration.buzz(this, millis)
+    private fun previewVibration(section: SectionStyleBinding, profile: SpeechProfile) {
+        val millis = Prefs.vibrationMillis(this, profile).toLong()
+        val times = Prefs.vibrationRepeats(this, profile)
+        Vibration.buzz(this, millis, times)
+        // The button stays busy for the whole pattern, gaps included.
+        val total = millis * times + GAP_MS * (times - 1)
 
-        binding.vibrationTestButton.setText(R.string.vibration_test_running)
-        binding.vibrationTestButton.isEnabled = false
-        binding.vibrationTestButton.postDelayed({
-            binding.vibrationTestButton.setText(R.string.vibration_test)
-            binding.vibrationTestButton.isEnabled = true
-        }, millis)
+        section.vibrationTestButton.setText(R.string.vibration_test_running)
+        section.vibrationTestButton.isEnabled = false
+        section.vibrationTestButton.postDelayed({
+            section.vibrationTestButton.setText(R.string.vibration_test)
+            section.vibrationTestButton.isEnabled = true
+        }, total)
+    }
+
+    /** The major marks, spelled out the same way as the ordinary interval's. */
+    private fun updateMajorHint() {
+        binding.majorHint.text =
+            getString(R.string.major_hint, clockExamples(Prefs.majorIntervalMinutes(this)))
+    }
+
+    /**
+     * Spells out that the interval is anchored to the clock.
+     *
+     * "Every 5 minutes" reads as five minutes from whenever you switched it on; naming the actual
+     * marks is the only way to make clear that it lands on 7:00, 7:05, 7:10 regardless.
+     */
+    private fun updateIntervalHint() {
+        binding.intervalHint.text =
+            getString(R.string.interval_hint, clockExamples(Prefs.intervalMinutes(this)))
+    }
+
+    /** The first three marks of an hour at [minutes], e.g. "7:00, 7:15, 7:30". */
+    private fun clockExamples(minutes: Int): String = (0..2).joinToString(", ") { step ->
+        EXAMPLE_FORMAT.format(LocalTime.of(7, 0).plusMinutes((step * minutes).toLong()))
+    }
+
+    /** A switched-off announcement shows nothing but its switch. */
+    private fun refreshSectionBodies() {
+        binding.intervalBody.visibility = visibleIf(Prefs.intervalEnabled(this))
+        binding.countdownBody.visibility = visibleIf(Prefs.countdownEnabled(this))
+        binding.majorBody.visibility = visibleIf(Prefs.majorEnabled(this))
     }
 
     private fun setUpCountdownSwitch() {
@@ -183,6 +282,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.countdownSwitch.setOnCheckedChangeListener { _, checked ->
             Prefs.setCountdownEnabled(this, checked)
             TimeAnnouncerService.reschedule(this)
+            refreshSectionBodies()
             refreshCountdownAvailability()
             refreshProfileSwitcher()
         }
@@ -192,45 +292,52 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Prefs.setCountdownUsesMainVoice(this, same)
             // Editing a voice that is no longer in use would be confusing, so fall back to the
             // announcements one whenever the countdown stops having its own.
-            if (same) selectProfile(SpeechProfile.MAIN)
             refreshCountdownAvailability()
-            refreshProfileSwitcher()
+            refreshSelectedSection()
         }
 
         refreshCountdownAvailability()
     }
 
     private fun setUpMajorControls() {
+        Prefs.MAJOR_INTERVAL_CHOICES.forEach { minutes ->
+            val button = MaterialButton(
+                this,
+                null,
+                com.google.android.material.R.attr.materialButtonOutlinedStyle
+            ).apply {
+                id = View.generateViewId()
+                text = minutes.toString()
+                minWidth = 0
+                minimumWidth = 0
+                tag = minutes
+            }
+            binding.majorIntervalGroup.addView(button)
+            if (minutes == Prefs.majorIntervalMinutes(this)) {
+                binding.majorIntervalGroup.check(button.id)
+            }
+        }
+
+        binding.majorIntervalGroup.addOnButtonCheckedListener { group, checkedId, checked ->
+            if (!checked) return@addOnButtonCheckedListener
+            val minutes = group.findViewById<MaterialButton>(checkedId)?.tag as? Int
+                ?: return@addOnButtonCheckedListener
+            Prefs.setMajorIntervalMinutes(this, minutes)
+            // Major marks are not interval marks, so the pending alarm has to move with them.
+            TimeAnnouncerService.reschedule(this)
+            updateMajorHint()
+        }
+
         binding.majorSwitch.isChecked = Prefs.majorEnabled(this)
         binding.majorSwitch.setOnCheckedChangeListener { _, enabled ->
             Prefs.setMajorEnabled(this, enabled)
             // Quarter hours may not be interval marks, so the pending alarm has to move.
             TimeAnnouncerService.reschedule(this)
-            refreshMajorControls()
+            refreshSectionBodies()
             refreshProfileSwitcher()
         }
 
-        binding.majorRepeatsSlider.value = Prefs.majorRepeats(this).toFloat()
-        binding.majorRepeatsSlider.addOnChangeListener { _, value, fromUser ->
-            if (!fromUser) return@addOnChangeListener
-            Prefs.setMajorRepeats(this, value.toInt())
-            updateMajorRepeatsLabel()
-        }
 
-        refreshMajorControls()
-    }
-
-    private fun refreshMajorControls() {
-        val enabled = Prefs.majorEnabled(this)
-        val visibility = if (enabled) View.VISIBLE else View.GONE
-        binding.majorRepeatsLabel.visibility = visibility
-        binding.majorRepeatsSlider.visibility = visibility
-        if (enabled) updateMajorRepeatsLabel()
-    }
-
-    private fun updateMajorRepeatsLabel() {
-        binding.majorRepeatsLabel.text =
-            getString(R.string.major_repeats_label, Prefs.majorRepeats(this))
     }
 
     /**
@@ -239,30 +346,18 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
      * Offering a Countdown tab while the countdown shares the main voice, or a Major tab while
      * major announcements are off, would be offering settings that change nothing.
      */
+    /**
+     * Builds the selector once, with every announcement listed.
+     *
+     * All three are always offered, unlike before: the selector is now how you reach a
+     * switched-off announcement in order to switch it on.
+     */
     private fun refreshProfileSwitcher() {
-        val available = buildList {
-            add(SpeechProfile.MAIN)
-            if (Prefs.countdownEnabled(this@SettingsActivity) &&
-                !Prefs.countdownUsesMainVoice(this@SettingsActivity)
-            ) {
-                add(SpeechProfile.COUNTDOWN)
-            }
-            if (Prefs.majorEnabled(this@SettingsActivity)) add(SpeechProfile.MAJOR)
-        }
-
-        binding.profileRow.visibility = if (available.size > 1) View.VISIBLE else View.GONE
-
-        if (profile !in available) {
-            profile = SpeechProfile.MAIN
-            loadProfileIntoControls()
-            if (ttsReady) renderVoices()
-        }
-
         binding.profileGroup.setOnCheckedChangeListener(null)
         binding.profileGroup.removeAllViews()
         profileRadios.clear()
 
-        available.forEach { candidate ->
+        SpeechProfile.entries.forEach { candidate ->
             val button = RadioButton(this).apply {
                 id = View.generateViewId()
                 text = getString(candidate.labelRes)
@@ -276,13 +371,36 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.profileGroup.setOnCheckedChangeListener { _, checkedId ->
             profileRadios[checkedId]?.let { selectProfile(it) }
         }
+
+        refreshSelectedSection()
     }
+
+    /**
+     * Shows only the selected announcement's settings.
+     *
+     * The voice controls below are hidden for the countdown while it borrows the main voice —
+     * editing a voice that is not in use would be editing nothing.
+     */
+    private fun refreshSelectedSection() {
+        binding.intervalSection.visibility = visibleIf(profile == SpeechProfile.MAIN)
+        binding.countdownSection.visibility = visibleIf(profile == SpeechProfile.COUNTDOWN)
+        binding.majorSection.visibility = visibleIf(profile == SpeechProfile.MAJOR)
+
+        val borrowsMainVoice =
+            profile == SpeechProfile.COUNTDOWN && Prefs.countdownUsesMainVoice(this)
+        binding.voiceBlock.visibility = visibleIf(!borrowsMainVoice)
+        binding.sharedVoiceNote.visibility = visibleIf(borrowsMainVoice)
+    }
+
+    private fun visibleIf(condition: Boolean): Int = if (condition) View.VISIBLE else View.GONE
 
     private fun selectProfile(which: SpeechProfile) {
         if (profile == which) return
         profile = which
+        refreshSelectedSection()
         loadProfileIntoControls()
         if (ttsReady) renderVoices()
+        binding.scrollRoot.post { binding.scrollRoot.scrollTo(0, 0) }
     }
 
     /** Pushes the selected profile's stored values back into the sliders and labels. */
@@ -296,10 +414,16 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     /** At a one-minute interval there is nothing to count down to, so the switch is disabled. */
     private fun refreshCountdownAvailability() {
-        val usable = Prefs.intervalMinutes(this) > 1
+        val intervalOn = Prefs.intervalEnabled(this)
+        val usable = intervalOn && Prefs.intervalMinutes(this) > 1
         binding.countdownSwitch.isEnabled = usable
         binding.countdownExplainer.setText(
-            if (usable) R.string.countdown_explainer else R.string.countdown_needs_interval
+            when {
+                // It counts down to the next interval mark, so without those there is no target.
+                !intervalOn -> R.string.countdown_needs_interval_off
+                !usable -> R.string.countdown_needs_interval
+                else -> R.string.countdown_explainer
+            }
         )
 
         // The voice switch and the profile tabs are only meaningful while a countdown is running
@@ -512,7 +636,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             TimeSpeech.phraseFor(LocalTime.now())
         }
-        val repeats = if (profile == SpeechProfile.MAJOR) Prefs.majorRepeats(this) else 1
+        val repeats = Prefs.speakRepeats(this, profile)
         output.speak(engine, text, PREVIEW_UTTERANCE, profile, repeats)
     }
 
@@ -552,8 +676,14 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         const val PREVIEW_UTTERANCE = "settings-preview"
         const val PADDING_VERTICAL = 24
 
+        /** Matches the pause Vibration puts between buzzes. */
+        const val GAP_MS = 350L
+
         /** One decimal place: the slider steps in half-seconds. */
         val SECONDS_FORMAT: java.text.DecimalFormat = java.text.DecimalFormat("0.0")
+
+        /** Example marks in the interval hint. */
+        val EXAMPLE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm", Locale.US)
 
         /** Past this the limiter is working hard enough to be audible. */
         const val HARSH_BOOST_PERCENT = 250

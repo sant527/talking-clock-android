@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The style block shared by all three announcement sections: speak / vibrate choice, the
+  vibration length, and a test button. Included three times rather than written out three
+  times, so the sections cannot drift apart.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/feedback_heading"
+        android:textAllCaps="true"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp" />
+
+    <RadioGroup
+        android:id="@+id/styleGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/styleSpeak"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_speak"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="15sp" />
+
+        <RadioButton
+            android:id="@+id/styleBoth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_both"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="15sp" />
+
+        <RadioButton
+            android:id="@+id/styleVibrate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_vibrate"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="15sp" />
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/speakRepeatsLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/speakRepeatsSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stepSize="1"
+        android:valueFrom="1"
+        android:valueTo="5"
+        app:labelBehavior="gone" />
+
+    <TextView
+        android:id="@+id/vibrationLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/vibrationSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stepSize="500"
+        android:valueFrom="500"
+        android:valueTo="10000"
+        app:labelBehavior="gone" />
+
+    <TextView
+        android:id="@+id/vibrationRepeatsLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        />
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/vibrationRepeatsSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stepSize="1"
+        android:valueFrom="1"
+        android:valueTo="20"
+        app:labelBehavior="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/vibrationTestButton"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/vibration_test"
+        app:cornerRadius="14dp" />
+</LinearLayout>

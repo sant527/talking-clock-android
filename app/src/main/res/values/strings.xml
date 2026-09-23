@@ -68,9 +68,16 @@
     <string name="orientation_portrait">Portrait</string>
     <string name="orientation_landscape">Landscape</string>
 
-    <string name="interval_heading">Announcement interval</string>
+    <string name="interval_heading">Interval announcements</string>
+    <string name="interval_switch">Announce on an interval</string>
+    <string name="interval_every">Every</string>
+    <string name="interval_hint">Announces on the clock, not counting from now — %1$s and so on.</string>
+    <string name="countdown_needs_interval_off">Interval announcements are off, so there is nothing to count down to.</string>
+    <string name="tagline_major_only">Announces the quarter hours</string>
+    <string name="shared_voice_note">The countdown is using the announcements\' voice, volume and speed. Switch off “Use the same voice” above to give it its own.</string>
+    <string name="status_nothing_enabled">Nothing is switched on</string>
     <string name="interval_minutes">minutes</string>
-    <string name="feedback_heading">Announcement style</string>
+    <string name="feedback_heading">Style</string>
     <string name="feedback_speak">Speak</string>
     <string name="feedback_both">Speak and vibrate</string>
     <string name="feedback_vibrate">Vibrate only (silent)</string>
@@ -81,8 +88,7 @@
 
     <string name="major_heading">Major announcement</string>
     <string name="major_switch">Announce the quarter hours</string>
-    <string name="major_hint">A stronger marker at :00, :15, :30 and :45, whatever the ordinary interval is. The time is repeated, and it has its own voice and volume.</string>
-    <string name="major_repeats_label">Repeat: %1$d times</string>
+    <string name="major_hint">A stronger marker on the clock at %1$s and so on, whatever the ordinary interval is. It has its own voice, volume and repeat count.</string>
     <string name="profile_major">Major</string>
 
     <string name="countdown_heading">Countdown</string>
@@ -92,11 +98,21 @@
     <string name="countdown_own_voice_hint">The countdown has its own voice, volume, pitch and speed. Pick which one you are editing below.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
-    <string name="editing_profile">Editing</string>
+    <string name="editing_profile">Which announcement</string>
     <string name="countdown_needs_interval">Not available at a one-minute interval: every minute is already an announcement.</string>
 
     <plurals name="tagline">
         <item quantity="one">Announces the time every minute</item>
         <item quantity="other">Announces the time every %1$d minutes</item>
+    </plurals>
+
+    <plurals name="speak_repeats_label">
+        <item quantity="one">Say it once</item>
+        <item quantity="other">Say it %1$d times</item>
+    </plurals>
+
+    <plurals name="vibration_repeats_label">
+        <item quantity="one">Vibrate once</item>
+        <item quantity="other">Vibrate %1$d times</item>
     </plurals>
 </resources>
