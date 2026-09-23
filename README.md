@@ -166,6 +166,11 @@ own audio session — music and other apps are unaffected. 400% is +40 dB.
 **Voice gender.** Android exposes no gender on `Voice`, so voices are listed by accent
 and you tag them M/F yourself after hearing them. The tags are labels only.
 
+**Which voices are listed.** The engine knows every English accent it ships — over fifty
+on a typical install — so the picker is limited to the device's own country. Without
+that, removing one voice simply lets another accent drift in from further down the list.
+A short exclusion list in `VoiceSettings` drops individual voices on top of that.
+
 ## Source layout
 
 | File | Purpose |

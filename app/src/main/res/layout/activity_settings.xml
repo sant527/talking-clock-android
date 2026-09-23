@@ -86,7 +86,7 @@
             android:layout_height="wrap_content"
             android:text="@string/editing_profile" />
 
-        <RadioGroup
+        <LinearLayout
             android:id="@+id/profileGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -114,13 +114,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/interval_heading" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/intervalSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/interval_switch"
-                android:textColor="?android:attr/textColorPrimary" />
 
             <TextView
                 android:id="@+id/intervalHint"
@@ -191,13 +184,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/countdown_heading" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/countdownSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/countdown_switch"
-                android:textColor="?android:attr/textColorPrimary" />
 
             <TextView
                 android:id="@+id/countdownExplainer"
@@ -240,13 +226,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/major_heading" />
 
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/majorSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/major_switch"
-                android:textColor="?android:attr/textColorPrimary" />
 
             <TextView
                 android:id="@+id/majorHint"

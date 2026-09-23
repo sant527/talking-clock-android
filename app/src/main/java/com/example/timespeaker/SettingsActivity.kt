@@ -9,6 +9,7 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.timespeaker.databinding.ActivitySettingsBinding
+import com.example.timespeaker.databinding.ItemProfileBinding
 import com.example.timespeaker.databinding.ItemVoiceBinding
 import com.example.timespeaker.databinding.SectionStyleBinding
 import com.google.android.material.button.MaterialButton
@@ -38,7 +39,8 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var profile = SpeechProfile.MAIN
     private var naturalOrder: List<Voice> = emptyList()
     private val themeRadios = linkedMapOf<AppTheme, RadioButton>()
-    private val profileRadios = linkedMapOf<Int, SpeechProfile>()
+    private val profileRadios = linkedMapOf<SpeechProfile, RadioButton>()
+    private val profileSwitches = linkedMapOf<SpeechProfile, com.google.android.material.materialswitch.MaterialSwitch>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         applyStoredTheme()
@@ -93,15 +95,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun setUpIntervalPicker() {
-        binding.intervalSwitch.isChecked = Prefs.intervalEnabled(this)
-        binding.intervalSwitch.setOnCheckedChangeListener { _, enabled ->
-            Prefs.setIntervalEnabled(this, enabled)
-            TimeAnnouncerService.reschedule(this)
-            refreshSectionBodies()
-            refreshCountdownAvailability()
-            refreshProfileSwitcher()
-        }
-
         val current = Prefs.intervalMinutes(this)
 
         Prefs.INTERVAL_CHOICES.forEach { minutes ->
@@ -270,23 +263,19 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         EXAMPLE_FORMAT.format(LocalTime.of(7, 0).plusMinutes((step * minutes).toLong()))
     }
 
-    /** A switched-off announcement shows nothing but its switch. */
+    /**
+     * Every option stays on screen whether its announcement is switched on or not.
+     *
+     * Collapsing a switched-off section hid the very settings you would want to look at before
+     * deciding to switch it on.
+     */
     private fun refreshSectionBodies() {
-        binding.intervalBody.visibility = visibleIf(Prefs.intervalEnabled(this))
-        binding.countdownBody.visibility = visibleIf(Prefs.countdownEnabled(this))
-        binding.majorBody.visibility = visibleIf(Prefs.majorEnabled(this))
+        binding.intervalBody.visibility = View.VISIBLE
+        binding.countdownBody.visibility = View.VISIBLE
+        binding.majorBody.visibility = View.VISIBLE
     }
 
     private fun setUpCountdownSwitch() {
-        binding.countdownSwitch.isChecked = Prefs.countdownEnabled(this)
-        binding.countdownSwitch.setOnCheckedChangeListener { _, checked ->
-            Prefs.setCountdownEnabled(this, checked)
-            TimeAnnouncerService.reschedule(this)
-            refreshSectionBodies()
-            refreshCountdownAvailability()
-            refreshProfileSwitcher()
-        }
-
         binding.sameVoiceSwitch.isChecked = Prefs.countdownUsesMainVoice(this)
         binding.sameVoiceSwitch.setOnCheckedChangeListener { _, same ->
             Prefs.setCountdownUsesMainVoice(this, same)
@@ -328,15 +317,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             updateMajorHint()
         }
 
-        binding.majorSwitch.isChecked = Prefs.majorEnabled(this)
-        binding.majorSwitch.setOnCheckedChangeListener { _, enabled ->
-            Prefs.setMajorEnabled(this, enabled)
-            // Quarter hours may not be interval marks, so the pending alarm has to move.
-            TimeAnnouncerService.reschedule(this)
-            refreshSectionBodies()
-            refreshProfileSwitcher()
-        }
-
 
     }
 
@@ -353,26 +333,55 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
      * switched-off announcement in order to switch it on.
      */
     private fun refreshProfileSwitcher() {
-        binding.profileGroup.setOnCheckedChangeListener(null)
         binding.profileGroup.removeAllViews()
         profileRadios.clear()
 
         SpeechProfile.entries.forEach { candidate ->
-            val button = RadioButton(this).apply {
-                id = View.generateViewId()
-                text = getString(candidate.labelRes)
-                isChecked = candidate == profile
-                setTextColor(textColorPrimary())
+            val row = ItemProfileBinding.inflate(layoutInflater, binding.profileGroup, false)
+
+            row.profileRadio.text = getString(candidate.labelRes)
+            row.profileRadio.isChecked = candidate == profile
+            row.profileRadio.setOnClickListener { selectProfile(candidate) }
+            profileRadios[candidate] = row.profileRadio
+
+            // The switch sits beside the radio so an announcement can be turned on or off
+            // without first selecting it and scrolling to its section.
+            row.profileEnabled.isChecked = isEnabled(candidate)
+            row.profileEnabled.setOnCheckedChangeListener { _, enabled ->
+                setEnabled(candidate, enabled)
+                TimeAnnouncerService.reschedule(this)
+                refreshCountdownAvailability()
+                refreshSelectedSection()
             }
-            profileRadios[button.id] = candidate
-            binding.profileGroup.addView(button)
+            profileSwitches[candidate] = row.profileEnabled
+
+            binding.profileGroup.addView(row.root)
         }
 
-        binding.profileGroup.setOnCheckedChangeListener { _, checkedId ->
-            profileRadios[checkedId]?.let { selectProfile(it) }
-        }
-
+        refreshCountdownAvailability()
         refreshSelectedSection()
+    }
+
+    private fun isEnabled(which: SpeechProfile): Boolean = when (which) {
+        SpeechProfile.MAIN -> Prefs.intervalEnabled(this)
+        SpeechProfile.COUNTDOWN -> Prefs.countdownEnabled(this)
+        SpeechProfile.MAJOR -> Prefs.majorEnabled(this)
+    }
+
+    private fun setEnabled(which: SpeechProfile, enabled: Boolean) = when (which) {
+        SpeechProfile.MAIN -> Prefs.setIntervalEnabled(this, enabled)
+        SpeechProfile.COUNTDOWN -> Prefs.setCountdownEnabled(this, enabled)
+        SpeechProfile.MAJOR -> Prefs.setMajorEnabled(this, enabled)
+    }
+
+    private fun selectProfile(which: SpeechProfile) {
+        if (profile == which) return
+        profile = which
+        profileRadios.forEach { (candidate, radio) -> radio.isChecked = candidate == which }
+        refreshSelectedSection()
+        loadProfileIntoControls()
+        if (ttsReady) renderVoices()
+        binding.scrollRoot.post { binding.scrollRoot.scrollTo(0, 0) }
     }
 
     /**
@@ -394,15 +403,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun visibleIf(condition: Boolean): Int = if (condition) View.VISIBLE else View.GONE
 
-    private fun selectProfile(which: SpeechProfile) {
-        if (profile == which) return
-        profile = which
-        refreshSelectedSection()
-        loadProfileIntoControls()
-        if (ttsReady) renderVoices()
-        binding.scrollRoot.post { binding.scrollRoot.scrollTo(0, 0) }
-    }
-
     /** Pushes the selected profile's stored values back into the sliders and labels. */
     private fun loadProfileIntoControls() {
         binding.volumeSlider.value = Prefs.volumePercent(this, profile).toFloat()
@@ -416,7 +416,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun refreshCountdownAvailability() {
         val intervalOn = Prefs.intervalEnabled(this)
         val usable = intervalOn && Prefs.intervalMinutes(this) > 1
-        binding.countdownSwitch.isEnabled = usable
+        profileSwitches[SpeechProfile.COUNTDOWN]?.isEnabled = usable
         binding.countdownExplainer.setText(
             when {
                 // It counts down to the next interval mark, so without those there is no target.

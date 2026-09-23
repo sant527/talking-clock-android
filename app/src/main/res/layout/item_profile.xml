@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One row of the "Which announcement" selector: the radio picks which announcement the settings
+  below belong to, and the switch turns that announcement on or off without having to select it
+  first.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="2dp">
+
+    <RadioButton
+        android:id="@+id/profileRadio"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/profileEnabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</LinearLayout>

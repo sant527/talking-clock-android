@@ -22,7 +22,7 @@ object VoiceSettings {
         engine.setPitch(Prefs.pitchPercent(context, profile) / 100f)
         engine.setSpeechRate(Prefs.ratePercent(context, profile) / 100f)
 
-        val chosen = Prefs.voiceName(context, profile)
+        val chosen = Prefs.voiceName(context, profile)?.takeUnless { it in EXCLUDED_VOICES }
         if (chosen == null) {
             // No voice picked for this profile: leave the engine on its default rather than
             // inheriting whatever the previous utterance happened to select.
@@ -44,11 +44,16 @@ object VoiceSettings {
     fun availableVoices(engine: TextToSpeech): List<Voice> {
         val defaultLocale = engine.defaultVoice?.locale
         val language = defaultLocale?.language ?: DEFAULT_LANGUAGE
+        val country = defaultLocale?.country
         val voices = engine.voices ?: return emptyList()
 
         return voices
             .filter { it.locale.language == language }
+            // Own country only. The engine lists every English accent it knows - dozens of them -
+            // and mixing Australian and Nigerian voices into an Indian phone's picker is noise.
+            .filter { country.isNullOrBlank() || it.locale.country == country }
             .filterNot { NOT_INSTALLED in it.features }
+            .filterNot { it.name in EXCLUDED_VOICES }
             .sortedWith(
                 // The phone's own accent first, then offline before online, then by name so the
                 // numbering stays put between visits.
@@ -62,6 +67,20 @@ object VoiceSettings {
     /** A human label for a voice's accent, e.g. "India" or "United Kingdom". */
     fun accentOf(voice: Voice): String =
         voice.locale.getDisplayCountry(Locale.getDefault()).ifBlank { voice.locale.displayName }
+
+    /**
+     * Voices left out of the picker at the user's request.
+     *
+     * Listed by engine name rather than by position: the numbering shown in the app comes from
+     * the engine's own list, and excluding by index would quietly remove the wrong ones if that
+     * list ever changed. These names are specific to this device's Google TTS install - on an
+     * engine that does not have them, the list simply does not match and nothing is removed.
+     */
+    private val EXCLUDED_VOICES = setOf(
+        "en-in-x-ene-local",
+        "en-in-x-ena-network",
+        "en-in-x-enc-network"
+    )
 
     private const val NOT_INSTALLED = "notInstalled"
     private const val DEFAULT_LANGUAGE = "en"
