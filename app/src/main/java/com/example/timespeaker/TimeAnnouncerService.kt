@@ -150,11 +150,18 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // mode it simply says nothing.
         if (!Prefs.announcementFeedback(this).speaks) return
 
-        val remaining = interval - (minuteOfDay(now.hour, now.minute) % interval)
-        // Outside the chosen range the countdown simply stays quiet.
-        if (remaining > Prefs.countdownRange(this).leadMinutes(interval)) return
+        // Half-minutes since the last mark, so a step of 2.5 minutes is exactly expressible.
+        val intervalHalves = interval * 2
+        val elapsed = halfOfDay(now) % intervalHalves
+        if (elapsed == 0 || elapsed % Prefs.countdownStepHalves(this) != 0) return
+
+        val remainingHalves = intervalHalves - elapsed
         if (ttsReady) {
-            speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN, Prefs.speakRepeats(this, SpeechProfile.COUNTDOWN))
+            speakText(
+                TimeSpeech.halfMinutes(remainingHalves),
+                SpeechProfile.COUNTDOWN,
+                Prefs.speakRepeats(this, SpeechProfile.COUNTDOWN)
+            )
         } else {
             announcePending = true
         }
@@ -222,6 +229,11 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
             // :45 are not - so the alarm has to be pulled forward to catch them.
             val nextMajor = nextMark(now, Prefs.majorIntervalMinutes(this))
             if (next == null || nextMajor.isBefore(next)) next = nextMajor
+        }
+
+        if (Prefs.countdownEnabled(this) && Prefs.intervalEnabled(this)) {
+            val point = nextCountdownPoint(now, interval, Prefs.countdownStepHalves(this))
+            if (point != null && (next == null || point.isBefore(next))) next = point
         }
 
         val alarms = getSystemService(AlarmManager::class.java)
@@ -429,6 +441,29 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
          * match minute zero of every hour and fire twice as often as asked.
          */
         fun minuteOfDay(hour: Int, minute: Int): Int = hour * 60 + minute
+
+        /** The same idea in half-minutes, which is the unit the countdown steps in. */
+        fun halfOfDay(time: LocalDateTime): Int =
+            (time.hour * 60 + time.minute) * 2 + if (time.second >= 30) 1 else 0
+
+        fun halfOfDay(time: LocalTime): Int =
+            (time.hour * 60 + time.minute) * 2 + if (time.second >= 30) 1 else 0
+
+        /**
+         * The next countdown point after [from], or null when the next thing due is the mark.
+         *
+         * Worked in half-minutes from the last mark rather than from midnight, because the
+         * points restart at every mark and a step need not divide the interval.
+         */
+        fun nextCountdownPoint(from: LocalDateTime, interval: Int, stepHalves: Int): LocalDateTime? {
+            val intervalHalves = interval * 2
+            val elapsed = halfOfDay(from) % intervalHalves
+            val offset = (elapsed / stepHalves + 1) * stepHalves
+            if (offset >= intervalHalves) return null
+
+            val boundary = from.withSecond(if (from.second >= 30) 30 else 0).withNano(0)
+            return boundary.plusSeconds((offset - elapsed) * 30L)
+        }
 
         fun isMark(time: LocalTime, interval: Int): Boolean =
             minuteOfDay(time.hour, time.minute) % interval == 0

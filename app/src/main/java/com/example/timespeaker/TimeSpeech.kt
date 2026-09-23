@@ -44,6 +44,23 @@ object TimeSpeech {
      */
     fun number(value: Int): String = minuteWords(value.coerceIn(0, 59))
 
+    /**
+     * A count of half-minutes, spoken as "two" or "two point five".
+     *
+     * A lone half is "half a minute" rather than "zero point five", which is what a person
+     * would actually say.
+     */
+    fun halfMinutes(halves: Int): String {
+        val whole = halves / 2
+        val hasHalf = halves % 2 == 1
+
+        return when {
+            !hasHalf -> number(whole)
+            whole == 0 -> "half a minute"
+            else -> "${number(whole)} point five"
+        }
+    }
+
     private fun minuteWords(minute: Int): String {
         if (minute < 20) return UNITS[minute]
         val tens = TENS[minute / 10]

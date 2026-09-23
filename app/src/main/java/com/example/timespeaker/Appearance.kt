@@ -66,41 +66,6 @@ enum class AnnouncementFeedback(
     }
 }
 
-/**
- * How much of the gap between announcements the countdown covers.
- *
- * Fixed values count the last N minutes; the proportional ones scale with the interval, so
- * "half" is 2 minutes at a five-minute interval and 30 at an hourly one.
- */
-enum class CountdownRange(val key: String, val labelRes: Int) {
-    ALL("all", R.string.countdown_range_all),
-    ONE("1", R.string.countdown_range_1),
-    TWO("2", R.string.countdown_range_2),
-    THREE("3", R.string.countdown_range_3),
-    FOUR("4", R.string.countdown_range_4),
-    QUARTER("25", R.string.countdown_range_25),
-    HALF("50", R.string.countdown_range_50);
-
-    /** How many minutes before the next announcement the countdown starts. */
-    fun leadMinutes(interval: Int): Int = when (this) {
-        // Every minute in between: the mark itself is the announcement, not a countdown.
-        ALL -> interval - 1
-        ONE -> 1
-        TWO -> 2
-        THREE -> 3
-        FOUR -> 4
-        // At least one, so a short interval still counts down rather than going silent.
-        QUARTER -> maxOf(1, interval / 4)
-        HALF -> maxOf(1, interval / 2)
-    }.coerceAtMost(interval - 1)
-
-    companion object {
-        val DEFAULT = ALL
-
-        fun fromKey(key: String?): CountdownRange = entries.firstOrNull { it.key == key } ?: DEFAULT
-    }
-}
-
 /** Whether the clock is drawn as digits or as a dial. */
 enum class ClockStyle(val key: String, val labelRes: Int) {
     DIGITAL("digital", R.string.clock_digital),

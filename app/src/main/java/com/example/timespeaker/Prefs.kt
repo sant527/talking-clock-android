@@ -30,7 +30,7 @@ object Prefs {
     private const val KEY_ORIENTATION = "fullscreen_orientation"
     private const val KEY_INTERVAL = "announcement_interval"
     private const val KEY_COUNTDOWN = "countdown_enabled"
-    private const val KEY_COUNTDOWN_RANGE = "countdown_range"
+    private const val KEY_COUNTDOWN_RANGE = "countdown_step_halves"
 
     const val MALE = "M"
     const val FEMALE = "F"
@@ -151,12 +151,27 @@ object Prefs {
     fun countdownEnabled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_COUNTDOWN, false)
 
-    /** How much of the gap the countdown covers. */
-    fun countdownRange(context: Context): CountdownRange =
-        CountdownRange.fromKey(prefs(context).getString(KEY_COUNTDOWN_RANGE, null))
+    /**
+     * Countdown steps offered, counted in half-minutes.
+     *
+     * Half-minutes rather than minutes so the step can be 1.5 or 2.5; everything downstream
+     * works in the same unit, which keeps the arithmetic exact instead of rounding.
+     */
+    val COUNTDOWN_STEP_CHOICES = listOf(2, 3, 4, 5, 6, 7, 8, 9)
 
-    fun setCountdownRange(context: Context, range: CountdownRange) {
-        prefs(context).edit().putString(KEY_COUNTDOWN_RANGE, range.key).apply()
+    /**
+     * How often the countdown speaks between announcements, in half-minutes.
+     *
+     * A step of 4 (two minutes) at a five-minute interval speaks at 7:02 and 7:04; a step of 5
+     * (two and a half) speaks once, at 7:02:30, with two and a half minutes left.
+     */
+    fun countdownStepHalves(context: Context): Int {
+        val stored = prefs(context).getInt(KEY_COUNTDOWN_RANGE, 2)
+        return if (stored in COUNTDOWN_STEP_CHOICES) stored else 2
+    }
+
+    fun setCountdownStepHalves(context: Context, halves: Int) {
+        prefs(context).edit().putInt(KEY_COUNTDOWN_RANGE, halves).apply()
     }
 
     fun setCountdownEnabled(context: Context, enabled: Boolean) {

@@ -56,7 +56,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         bindStyleSection(binding.countdownStyle, SpeechProfile.COUNTDOWN)
         bindStyleSection(binding.majorStyle, SpeechProfile.MAJOR)
         setUpCountdownSwitch()
-        setUpCountdownRange()
+        setUpCountdownStep()
         setUpMajorControls()
         // Reflect the stored switch positions on open; until now this only ran when a switch
         // was touched, so a section that was off still showed all its controls.
@@ -116,7 +116,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 ?: return@addOnButtonCheckedListener
             Prefs.setIntervalMinutes(this, minutes)
             updateIntervalHint()
-            updateCountdownRangeHint()
+            updateCountdownStepHint()
             // The alarm already in flight was set for the old interval; move it.
             TimeAnnouncerService.reschedule(this)
             refreshCountdownAvailability()
@@ -294,38 +294,58 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         refreshCountdownAvailability()
     }
 
-    private fun setUpCountdownRange() {
-        CountdownRange.entries.forEach { range ->
+    private fun setUpCountdownStep() {
+        Prefs.COUNTDOWN_STEP_CHOICES.forEach { halves ->
             val button = MaterialButton(
                 this,
                 null,
                 com.google.android.material.R.attr.materialButtonOutlinedStyle
             ).apply {
                 id = View.generateViewId()
-                text = getString(range.labelRes)
+                text = STEP_FORMAT.format(halves / 2f)
                 minWidth = 0
                 minimumWidth = 0
-                tag = range
+                tag = halves
             }
             binding.countdownRangeGroup.addView(button)
-            if (range == Prefs.countdownRange(this)) binding.countdownRangeGroup.check(button.id)
+            if (halves == Prefs.countdownStepHalves(this)) binding.countdownRangeGroup.check(button.id)
         }
 
         binding.countdownRangeGroup.addOnButtonCheckedListener { group, checkedId, checked ->
             if (!checked) return@addOnButtonCheckedListener
-            val range = group.findViewById<MaterialButton>(checkedId)?.tag as? CountdownRange
+            val halves = group.findViewById<MaterialButton>(checkedId)?.tag as? Int
                 ?: return@addOnButtonCheckedListener
-            Prefs.setCountdownRange(this, range)
-            updateCountdownRangeHint()
+            Prefs.setCountdownStepHalves(this, halves)
+            TimeAnnouncerService.reschedule(this)
+            updateCountdownStepHint()
         }
 
-        updateCountdownRangeHint()
+        updateCountdownStepHint()
     }
 
-    /** Spells out what the choice works out to at the current interval. */
-    private fun updateCountdownRangeHint() {
-        val minutes = Prefs.countdownRange(this).leadMinutes(Prefs.intervalMinutes(this))
-        binding.countdownRangeHint.text = getString(R.string.countdown_range_hint, minutes)
+    /**
+     * Names the minutes it will actually speak on.
+     *
+     * The number spoken is always the minutes remaining; this setting only changes how often it
+     * says one. Spelling out "7:02, 7:04" is the quickest way to show that.
+     */
+    private fun updateCountdownStepHint() {
+        val intervalHalves = Prefs.intervalMinutes(this) * 2
+        val step = Prefs.countdownStepHalves(this)
+
+        val marks = generateSequence(step) { it + step }
+            .takeWhile { it < intervalHalves }
+            .map { POINT_FORMAT.format(LocalTime.of(7, 0).plusSeconds(it * 30L)) }
+            .toList()
+
+        binding.countdownRangeHint.text = when {
+            marks.isEmpty() -> getString(R.string.countdown_step_none)
+            marks.size <= 4 -> getString(R.string.countdown_range_hint, marks.joinToString(", "))
+            else -> getString(
+                R.string.countdown_range_hint,
+                marks.take(4).joinToString(", ") + " …"
+            )
+        }
     }
 
     private fun setUpMajorControls() {
@@ -722,6 +742,12 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         /** Example marks in the interval hint. */
         val EXAMPLE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm", Locale.US)
+
+        /** Countdown points can fall on a half minute, so they need the seconds shown. */
+        val POINT_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm:ss", Locale.US)
+
+        /** "1", "1.5", "2" - no trailing zero on the whole numbers. */
+        val STEP_FORMAT: java.text.DecimalFormat = java.text.DecimalFormat("0.#")
 
         /** Past this the limiter is working hard enough to be audible. */
         const val HARSH_BOOST_PERCENT = 250

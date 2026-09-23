@@ -90,15 +90,9 @@
     <string name="major_hint">A stronger marker on the clock at %1$s and so on, whatever the ordinary interval is. It has its own voice, volume and repeat count.</string>
     <string name="profile_major">Major</string>
 
-    <string name="countdown_range_heading">Count down for</string>
-    <string name="countdown_range_all">All</string>
-    <string name="countdown_range_1">1</string>
-    <string name="countdown_range_2">2</string>
-    <string name="countdown_range_3">3</string>
-    <string name="countdown_range_4">4</string>
-    <string name="countdown_range_25">25%</string>
-    <string name="countdown_range_50">50%</string>
-    <string name="countdown_range_hint">Counts the last %1$d minute(s) before each announcement.</string>
+    <string name="countdown_range_heading">Count down every … minutes</string>
+    <string name="countdown_step_none">The interval is too short to count down.</string>
+    <string name="countdown_range_hint">Speaks at %1$s.</string>
 
     <string name="countdown_heading">Countdown</string>
     <string name="countdown_switch">Count down the minutes in between</string>
