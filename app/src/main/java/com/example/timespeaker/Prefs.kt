@@ -30,6 +30,7 @@ object Prefs {
     private const val KEY_ORIENTATION = "fullscreen_orientation"
     private const val KEY_INTERVAL = "announcement_interval"
     private const val KEY_COUNTDOWN = "countdown_enabled"
+    private const val KEY_COUNTDOWN_RANGE = "countdown_range"
 
     const val MALE = "M"
     const val FEMALE = "F"
@@ -149,6 +150,14 @@ object Prefs {
      */
     fun countdownEnabled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_COUNTDOWN, false)
+
+    /** How much of the gap the countdown covers. */
+    fun countdownRange(context: Context): CountdownRange =
+        CountdownRange.fromKey(prefs(context).getString(KEY_COUNTDOWN_RANGE, null))
+
+    fun setCountdownRange(context: Context, range: CountdownRange) {
+        prefs(context).edit().putString(KEY_COUNTDOWN_RANGE, range.key).apply()
+    }
 
     fun setCountdownEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_COUNTDOWN, enabled).apply()

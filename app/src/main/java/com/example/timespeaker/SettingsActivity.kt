@@ -56,6 +56,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         bindStyleSection(binding.countdownStyle, SpeechProfile.COUNTDOWN)
         bindStyleSection(binding.majorStyle, SpeechProfile.MAJOR)
         setUpCountdownSwitch()
+        setUpCountdownRange()
         setUpMajorControls()
         // Reflect the stored switch positions on open; until now this only ran when a switch
         // was touched, so a section that was off still showed all its controls.
@@ -115,6 +116,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 ?: return@addOnButtonCheckedListener
             Prefs.setIntervalMinutes(this, minutes)
             updateIntervalHint()
+            updateCountdownRangeHint()
             // The alarm already in flight was set for the old interval; move it.
             TimeAnnouncerService.reschedule(this)
             refreshCountdownAvailability()
@@ -290,6 +292,40 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun setUpCountdownSwitch() {
 
         refreshCountdownAvailability()
+    }
+
+    private fun setUpCountdownRange() {
+        CountdownRange.entries.forEach { range ->
+            val button = MaterialButton(
+                this,
+                null,
+                com.google.android.material.R.attr.materialButtonOutlinedStyle
+            ).apply {
+                id = View.generateViewId()
+                text = getString(range.labelRes)
+                minWidth = 0
+                minimumWidth = 0
+                tag = range
+            }
+            binding.countdownRangeGroup.addView(button)
+            if (range == Prefs.countdownRange(this)) binding.countdownRangeGroup.check(button.id)
+        }
+
+        binding.countdownRangeGroup.addOnButtonCheckedListener { group, checkedId, checked ->
+            if (!checked) return@addOnButtonCheckedListener
+            val range = group.findViewById<MaterialButton>(checkedId)?.tag as? CountdownRange
+                ?: return@addOnButtonCheckedListener
+            Prefs.setCountdownRange(this, range)
+            updateCountdownRangeHint()
+        }
+
+        updateCountdownRangeHint()
+    }
+
+    /** Spells out what the choice works out to at the current interval. */
+    private fun updateCountdownRangeHint() {
+        val minutes = Prefs.countdownRange(this).leadMinutes(Prefs.intervalMinutes(this))
+        binding.countdownRangeHint.text = getString(R.string.countdown_range_hint, minutes)
     }
 
     private fun setUpMajorControls() {

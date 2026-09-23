@@ -151,6 +151,8 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         if (!Prefs.announcementFeedback(this).speaks) return
 
         val remaining = interval - (minuteOfDay(now.hour, now.minute) % interval)
+        // Outside the chosen range the countdown simply stays quiet.
+        if (remaining > Prefs.countdownRange(this).leadMinutes(interval)) return
         if (ttsReady) {
             speakText(TimeSpeech.number(remaining), SpeechProfile.COUNTDOWN, Prefs.speakRepeats(this, SpeechProfile.COUNTDOWN))
         } else {
