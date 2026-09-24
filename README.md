@@ -154,11 +154,15 @@ Other manufacturers (OnePlus, Oppo, Vivo, Samsung) have an equivalent
 **Scheduling.** The service does not hold a permanent wake lock — that would keep the
 CPU awake around the clock. It wakes only for the two seconds it takes to speak.
 
-Announcements are scheduled with `setAlarmClock`, which Doze does not defer.
+Everything is scheduled with `setAlarmClock`, which Doze does not defer.
 `setExactAndAllowWhileIdle` is not enough: Doze rate-limits it to roughly one alarm per
-app per nine minutes, so on a phone sitting locked most announcements were simply
-dropped. Countdown ticks still use it — they are far too frequent to justify an
-alarm-clock slot each, and losing some of them does not cost you an announcement.
+app per nine minutes, so on a phone sitting locked, announcements were dropped and
+countdown ticks arrived tens of seconds late.
+
+A late tick still speaks. It rounds back to the countdown point the wake-up belongs to
+rather than requiring the alarm to land exactly on it — an exact test made a tick that
+arrived a moment late say nothing at all, which read as the countdown being broken. A
+slot guard keeps a late or repeated tick from saying the same value twice.
 
 One visible consequence: because there is always a next announcement, the system shows
 its alarm icon while the app is running.

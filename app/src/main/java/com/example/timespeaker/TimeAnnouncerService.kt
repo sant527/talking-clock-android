@@ -40,6 +40,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     /** Utterances still to finish before the wake lock can go. */
     private var pendingUtterances = 0
 
+    /** The countdown slot already spoken, so a late or repeated tick does not say it twice. */
+    private var lastCountdownSlot = -1
+
     /** Announcing once on start is what tells the user the app is actually working. */
     private var greeted = false
 
@@ -152,10 +155,21 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
         // Half-minutes since the last mark, so a step of 2.5 minutes is exactly expressible.
         val intervalHalves = interval * 2
+        val step = Prefs.countdownStepHalves(this)
         val elapsed = halfOfDay(now) % intervalHalves
-        if (elapsed == 0 || elapsed % Prefs.countdownStepHalves(this) != 0) return
 
-        val remainingHalves = intervalHalves - elapsed
+        // Round back to the countdown point this wake-up belongs to rather than demanding an
+        // exact hit. Alarms routinely arrive a few seconds late, and an exact test made a late
+        // tick say nothing at all instead of saying the right thing slightly late.
+        val point = (elapsed / step) * step
+        if (point == 0) return
+
+        // A late tick can land in the same slot as one already spoken; say it once.
+        val slot = halfOfDay(now) / step
+        if (slot == lastCountdownSlot) return
+        lastCountdownSlot = slot
+
+        val remainingHalves = intervalHalves - point
         if (ttsReady) {
             speakText(
                 TimeSpeech.halfMinutes(remainingHalves),
@@ -253,9 +267,11 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         }
 
         if (tick != null) {
-            alarms.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                millisAt(tick),
+            // Also an alarm clock. setExactAndAllowWhileIdle is rate-limited while idle, and in
+            // practice ticks arrived tens of seconds late or not at all - which is precisely the
+            // countdown appearing not to work.
+            alarms.setAlarmClock(
+                AlarmManager.AlarmClockInfo(millisAt(tick), openAppPendingIntent()),
                 countdownPendingIntent()
             )
         } else {
