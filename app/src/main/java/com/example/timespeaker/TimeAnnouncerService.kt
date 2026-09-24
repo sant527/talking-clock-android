@@ -214,43 +214,74 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         boostUnsupported = output.boostUnsupported
     }
 
+    /**
+     * Schedules the next wake-ups.
+     *
+     * Two alarms, deliberately, because Doze treats them very differently:
+     *
+     * - The announcement itself goes through [AlarmManager.setAlarmClock], which Doze does not
+     *   defer at all. `setExactAndAllowWhileIdle` is rate-limited to roughly one alarm per app
+     *   per nine minutes while idle, which silently swallowed most announcements on a phone
+     *   sitting locked — the whole point of the app.
+     * - The countdown ticks keep using `setExactAndAllowWhileIdle`. They are wanted but not
+     *   essential, they are far too frequent to justify an alarm-clock slot each, and if Doze
+     *   drops some of them the announcements still land.
+     */
     private fun scheduleNextAnnouncement() {
         val interval = Prefs.intervalMinutes(this)
-        // With the countdown on, something is spoken every minute, so the alarm has to fire every
-        // minute too — the interval marks are a subset of those.
-        val step = if (Prefs.countdownEnabled(this)) 1 else interval
-
-        // Dated rather than time-of-day arithmetic, so the 23:55 mark rolls into 00:00 tomorrow
-        // instead of scheduling an alarm nearly a day in the past.
         val now = LocalDateTime.now()
-        var next: LocalDateTime? = if (Prefs.intervalEnabled(this)) nextMark(now, step) else null
-        if (Prefs.majorEnabled(this)) {
-            // Quarter hours are not necessarily interval marks - at an interval of 10, :15 and
-            // :45 are not - so the alarm has to be pulled forward to catch them.
-            val nextMajor = nextMark(now, Prefs.majorIntervalMinutes(this))
-            if (next == null || nextMajor.isBefore(next)) next = nextMajor
-        }
-
-        if (Prefs.countdownEnabled(this) && Prefs.intervalEnabled(this)) {
-            val point = nextCountdownPoint(now, interval, Prefs.countdownStepHalves(this))
-            if (point != null && (next == null || point.isBefore(next))) next = point
-        }
-
         val alarms = getSystemService(AlarmManager::class.java)
-        if (next == null) {
-            // Everything is switched off: cancel the pending alarm rather than waking for nothing.
+
+        val announcement = nextAnnouncementAt(now, interval)
+        if (announcement == null) {
+            // Everything is switched off: cancel both alarms rather than waking for nothing.
             alarms.cancel(announcePendingIntent())
+            alarms.cancel(countdownPendingIntent())
             notificationManager().notify(NOTIFICATION_ID, buildIdleNotification())
             return
         }
-        val triggerAt = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        // setExactAndAllowWhileIdle is the only scheduling call that survives Doze, which is
-        // exactly the state the phone is in when it is locked on a desk.
-        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, announcePendingIntent())
+        alarms.setAlarmClock(
+            AlarmManager.AlarmClockInfo(millisAt(announcement), openAppPendingIntent()),
+            announcePendingIntent()
+        )
 
-        notificationManager().notify(NOTIFICATION_ID, buildNotification(nextSpokenMark(interval)))
+        val tick = if (Prefs.countdownEnabled(this) && Prefs.intervalEnabled(this)) {
+            nextCountdownPoint(now, interval, Prefs.countdownStepHalves(this))
+        } else {
+            null
+        }
+
+        if (tick != null) {
+            alarms.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                millisAt(tick),
+                countdownPendingIntent()
+            )
+        } else {
+            alarms.cancel(countdownPendingIntent())
+        }
+
+        notificationManager().notify(NOTIFICATION_ID, buildNotification(announcement.toLocalTime()))
     }
+
+    /** The next interval or major mark, or null when neither is switched on. */
+    private fun nextAnnouncementAt(now: LocalDateTime, interval: Int): LocalDateTime? {
+        val ordinary = if (Prefs.intervalEnabled(this)) nextMark(now, interval) else null
+        val major = if (Prefs.majorEnabled(this)) {
+            nextMark(now, Prefs.majorIntervalMinutes(this))
+        } else {
+            null
+        }
+
+        return when {
+            ordinary != null && major != null -> if (major.isBefore(ordinary)) major else ordinary
+            else -> ordinary ?: major
+        }
+    }
+
+    private fun millisAt(time: LocalDateTime): Long =
+        time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     /** The next time something is actually announced: an interval mark or a quarter hour. */
     private fun nextSpokenMark(interval: Int): LocalTime {
@@ -268,6 +299,22 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         this,
         REQUEST_ANNOUNCE,
         Intent(this, TimeAnnouncerService::class.java).setAction(ACTION_ANNOUNCE),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    /** A separate request code, so the two alarms do not overwrite one another. */
+    private fun countdownPendingIntent(): PendingIntent = PendingIntent.getService(
+        this,
+        REQUEST_COUNTDOWN,
+        Intent(this, TimeAnnouncerService::class.java).setAction(ACTION_ANNOUNCE),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    /** Where the system's alarm icon leads when tapped. */
+    private fun openAppPendingIntent(): PendingIntent = PendingIntent.getActivity(
+        this,
+        REQUEST_OPEN,
+        Intent(this, MainActivity::class.java),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
@@ -354,7 +401,10 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         getSystemService(NotificationManager::class.java)
 
     override fun onDestroy() {
-        getSystemService(AlarmManager::class.java).cancel(announcePendingIntent())
+        getSystemService(AlarmManager::class.java).apply {
+            cancel(announcePendingIntent())
+            cancel(countdownPendingIntent())
+        }
         output.release()
         releaseWakeLock()
         tts?.stop()
@@ -378,6 +428,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         private const val REQUEST_ANNOUNCE = 100
         private const val REQUEST_STOP = 101
         private const val REQUEST_OPEN = 102
+        private const val REQUEST_COUNTDOWN = 103
 
         private const val UTTERANCE_ID = "time-announcement"
         private const val WAKE_LOCK_TAG = "TimeSpeaker:announcement"

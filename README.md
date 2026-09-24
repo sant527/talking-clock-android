@@ -152,9 +152,16 @@ Other manufacturers (OnePlus, Oppo, Vivo, Samsung) have an equivalent
 ## How it works
 
 **Scheduling.** The service does not hold a permanent wake lock — that would keep the
-CPU awake around the clock. It schedules one exact alarm
-(`setExactAndAllowWhileIdle`, which survives Doze) for the next mark, wakes for the
-two seconds it takes to speak, and schedules the next one.
+CPU awake around the clock. It wakes only for the two seconds it takes to speak.
+
+Announcements are scheduled with `setAlarmClock`, which Doze does not defer.
+`setExactAndAllowWhileIdle` is not enough: Doze rate-limits it to roughly one alarm per
+app per nine minutes, so on a phone sitting locked most announcements were simply
+dropped. Countdown ticks still use it — they are far too frequent to justify an
+alarm-clock slot each, and losing some of them does not cost you an announcement.
+
+One visible consequence: because there is always a next announcement, the system shows
+its alarm icon while the app is running.
 
 **Speech.** Numbers are spelled out ("seven oh five", "four") rather than passed as
 digits, because engines read digits inconsistently.
