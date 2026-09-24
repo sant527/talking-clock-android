@@ -209,6 +209,18 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         speakText(TimeSpeech.phraseFor(time), SpeechProfile.MAJOR, Prefs.speakRepeats(this, SpeechProfile.MAJOR))
     }
 
+    /**
+     * True while a call is in progress.
+     *
+     * Read from the audio mode rather than the telephony state: it needs no permission and it
+     * covers VoIP calls - WhatsApp, Meet - as well as ordinary ones.
+     */
+    private fun onCall(): Boolean {
+        val mode = getSystemService(android.media.AudioManager::class.java)?.mode ?: return false
+        return mode == android.media.AudioManager.MODE_IN_CALL ||
+            mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+    }
+
     private fun vibrate(profile: SpeechProfile) {
         silencer.start()
         Vibration.buzz(
@@ -221,6 +233,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     private fun speakText(text: String, profile: SpeechProfile, repeats: Int = 1) {
         val engine = tts ?: return
         if (!ttsReady) return
+        // Guarded here rather than at each caller, so nothing can speak during a call by
+        // going round the back. Vibration is left alone - it is silent anyway.
+        if (onCall() && !Prefs.speakDuringCalls(this)) return
 
         // Keep the CPU alive for the utterances; with the screen off the device would otherwise
         // doze off mid-sentence. The timeout is a backstop in case onDone never arrives.

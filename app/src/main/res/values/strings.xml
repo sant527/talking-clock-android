@@ -99,6 +99,10 @@
     <string name="countdown_explainer">On every minute between announcements, speak only the number of minutes left — at 7:51 with a five-minute interval it says “four”.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
+    <string name="calls_heading">During a call</string>
+    <string name="calls_switch">Keep speaking during calls</string>
+    <string name="calls_hint">With this off, announcements stay silent while you are on a call, including WhatsApp and other internet calls. The schedule carries on either way, so the next one arrives as usual.</string>
+
     <string name="editing_profile">Which announcement</string>
     <string name="countdown_needs_interval">Not available at a one-minute interval: every minute is already an announcement.</string>
 

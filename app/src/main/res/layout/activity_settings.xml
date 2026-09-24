@@ -77,6 +77,27 @@
                 android:text="@string/clock_analog" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
+        <TextView
+            style="@style/SettingLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/calls_heading" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/callsSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/calls_switch"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/calls_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
         <!-- The selector is the screen's spine: everything below it belongs to whichever
              announcement is picked here. All three are always listed, because this is also how
              you reach a switched-off one to turn it back on. -->

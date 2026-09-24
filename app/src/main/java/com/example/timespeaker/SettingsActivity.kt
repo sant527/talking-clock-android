@@ -66,6 +66,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         refreshProfileSwitcher()
         setUpThemePicker()
         setUpClockStylePicker()
+        setUpCallsSwitch()
 
         // Route the hardware volume keys at the stream announcements actually use, so the rocker
         // adjusts the right thing while this screen is open.
@@ -525,6 +526,13 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         isAllCaps = true
         setTextColor(textColorSecondary())
         setPadding(0, if (binding.themeGroup.childCount == 0) 0 else 16, 0, 4)
+    }
+
+    private fun setUpCallsSwitch() {
+        binding.callsSwitch.isChecked = Prefs.speakDuringCalls(this)
+        binding.callsSwitch.setOnCheckedChangeListener { _, speak ->
+            Prefs.setSpeakDuringCalls(this, speak)
+        }
     }
 
     private fun setUpClockStylePicker() {

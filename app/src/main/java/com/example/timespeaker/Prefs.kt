@@ -18,6 +18,7 @@ object Prefs {
     private const val KEY_FEEDBACK = "announcement_feedback"
     private const val KEY_VIBRATION_MS = "vibration_millis"
     private const val KEY_INTERVAL_ENABLED = "interval_enabled"
+    private const val KEY_SPEAK_IN_CALLS = "speak_during_calls"
     private const val KEY_MAJOR_ENABLED = "major_enabled"
     private const val KEY_MAJOR_INTERVAL = "major_interval"
     private const val KEY_MAJOR_REPEATS = "major_repeats"
@@ -50,7 +51,7 @@ object Prefs {
     val MAJOR_INTERVAL_CHOICES = listOf(10, 15, 20, 30, 45, 60, 120, 180)
     const val DEFAULT_MAJOR_REPEATS = 3
     const val MIN_REPEATS = 1
-    const val MAX_SPEAK_REPEATS = 5
+    const val MAX_SPEAK_REPEATS = 10
 
     /** Buzzes go much higher than spoken repeats: a long pulse train is a usable silent alarm. */
     const val MAX_VIBRATION_REPEATS = 20
@@ -179,6 +180,19 @@ object Prefs {
     }
 
     /** Whether announcements speak, vibrate, or both. Never applies to the countdown. */
+    /**
+     * Whether announcements still speak while a call is in progress.
+     *
+     * Off by default: talking over a call is the more surprising behaviour, and the schedule is
+     * unaffected either way, so nothing is lost by staying quiet.
+     */
+    fun speakDuringCalls(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_SPEAK_IN_CALLS, false)
+
+    fun setSpeakDuringCalls(context: Context, speak: Boolean) {
+        prefs(context).edit().putBoolean(KEY_SPEAK_IN_CALLS, speak).apply()
+    }
+
     /** Whether the ordinary interval announcements run at all. */
     fun intervalEnabled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_INTERVAL_ENABLED, true)
