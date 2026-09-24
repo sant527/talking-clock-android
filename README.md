@@ -8,7 +8,7 @@ Announcements keep running while the phone is locked and the screen is off.
 
 ## Download
 
-**[Download the latest APK](https://github.com/sant527/talking-clock-android/releases/latest/download/time-speaker-v1.0-debug.apk)**
+**[Download the latest APK](https://github.com/sant527/talking-clock-android/releases/latest/download/time-speaker-debug.apk)**
 
 All versions are on the [Releases page](https://github.com/sant527/talking-clock-android/releases).
 The APK is attached to each release rather than committed to the repository, so the
