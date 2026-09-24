@@ -58,6 +58,11 @@ object Vibration {
     /** Long enough to feel as a separate buzz rather than a stutter. */
     private const val GAP_MS = 350L
 
+    /** Cuts a vibration short, for the key-press escape hatch. */
+    fun cancel(context: Context) {
+        vibrator(context)?.cancel()
+    }
+
     private fun vibrator(context: Context): Vibrator? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             context.getSystemService(VibratorManager::class.java)?.defaultVibrator

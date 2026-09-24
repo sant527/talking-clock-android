@@ -50,6 +50,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
     private val output by lazy { SpeechOutput(this) }
 
+    /** Listens for a key press while something is being said, so it can be cut short. */
+    private val silencer by lazy { Silencer(this) { silenceNow() } }
+
     override fun onCreate() {
         super.onCreate()
         isRunning = true
@@ -207,6 +210,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun vibrate(profile: SpeechProfile) {
+        silencer.start()
         Vibration.buzz(
             this,
             Prefs.vibrationMillis(this, profile).toLong(),
@@ -221,6 +225,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // Keep the CPU alive for the utterances; with the screen off the device would otherwise
         // doze off mid-sentence. The timeout is a backstop in case onDone never arrives.
         acquireWakeLock()
+        silencer.start()
         // Counted, so a repeated announcement does not release the wake lock after its first
         // utterance and fall asleep partway through.
         pendingUtterances = repeats.coerceAtLeast(1)
@@ -345,6 +350,21 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
     private fun finishUtterance() {
         if (--pendingUtterances > 0) return
+        silencer.stop()
+        output.release()
+        releaseWakeLock()
+    }
+
+    /**
+     * Cuts the announcement short: stop talking, stop buzzing, let go of the wake lock.
+     *
+     * The schedule is untouched — this silences what is happening now, it does not switch
+     * anything off. The next announcement arrives as usual.
+     */
+    private fun silenceNow() {
+        pendingUtterances = 0
+        tts?.stop()
+        Vibration.cancel(this)
         output.release()
         releaseWakeLock()
     }
@@ -421,6 +441,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
             cancel(announcePendingIntent())
             cancel(countdownPendingIntent())
         }
+        silencer.stop()
         output.release()
         releaseWakeLock()
         tts?.stop()
