@@ -58,6 +58,12 @@ object Vibration {
     /** Long enough to feel as a separate buzz rather than a stutter. */
     private const val GAP_MS = 350L
 
+    /** How long [buzz] keeps the motor busy, pauses included. */
+    fun durationMillis(millis: Long, repeats: Int): Long {
+        val times = repeats.coerceAtLeast(1)
+        return millis * times + GAP_MS * (times - 1)
+    }
+
     /** Cuts a vibration short, for the key-press escape hatch. */
     fun cancel(context: Context) {
         vibrator(context)?.cancel()

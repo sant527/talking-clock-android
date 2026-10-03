@@ -10,7 +10,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -52,6 +54,16 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
 
     /** Listens for a key press while something is being said, so it can be cut short. */
     private val silencer by lazy { Silencer(this) { silenceNow() } }
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    /**
+     * Lets go of the keys and audio focus once a buzz ends.
+     *
+     * Speech does this when its last utterance finishes, but a vibrate-only announcement has no
+     * utterance - without this it held audio focus indefinitely, and music stayed paused.
+     */
+    private val endVibration = Runnable { if (pendingUtterances == 0) silencer.stop() }
 
     override fun onCreate() {
         super.onCreate()
@@ -151,10 +163,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         }
         if (!Prefs.countdownEnabled(this)) return
 
-        // Vibrate-only is chosen to keep the phone quiet. A countdown that still spoke a number
-        // every minute would defeat that entirely, and the countdown never vibrates — so in that
-        // mode it simply says nothing.
-        if (!Prefs.announcementFeedback(this).speaks) return
+        // The countdown has its own style section in settings, so it follows its own choice
+        // rather than the main announcement's.
+        val feedback = Prefs.announcementFeedback(this, SpeechProfile.COUNTDOWN)
 
         // Half-minutes since the last mark, so a step of 2.5 minutes is exactly expressible.
         val intervalHalves = interval * 2
@@ -172,6 +183,9 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         if (slot == lastCountdownSlot) return
         lastCountdownSlot = slot
 
+        if (feedback.vibrates) vibrate(SpeechProfile.COUNTDOWN)
+        if (!feedback.speaks) return
+
         val remainingHalves = intervalHalves - point
         if (ttsReady) {
             speakText(
@@ -187,8 +201,8 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     /**
      * Delivers an announcement as speech, a vibration, or both.
      *
-     * Only announcements reach here — the countdown speaks through [speakText] directly and never
-     * vibrates.
+     * Only announcements reach here — the countdown handles its own speech and vibration in
+     * [announceDue].
      */
     private fun speak(time: LocalTime) {
         val feedback = Prefs.announcementFeedback(this, SpeechProfile.MAIN)
@@ -222,12 +236,12 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun vibrate(profile: SpeechProfile) {
+        val millis = Prefs.vibrationMillis(this, profile).toLong()
+        val repeats = Prefs.vibrationRepeats(this, profile)
         silencer.start()
-        Vibration.buzz(
-            this,
-            Prefs.vibrationMillis(this, profile).toLong(),
-            Prefs.vibrationRepeats(this, profile)
-        )
+        Vibration.buzz(this, millis, repeats)
+        handler.removeCallbacks(endVibration)
+        handler.postDelayed(endVibration, Vibration.durationMillis(millis, repeats))
     }
 
     private fun speakText(text: String, profile: SpeechProfile, repeats: Int = 1) {
@@ -456,6 +470,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
             cancel(announcePendingIntent())
             cancel(countdownPendingIntent())
         }
+        handler.removeCallbacks(endVibration)
         silencer.stop()
         output.release()
         releaseWakeLock()

@@ -80,8 +80,11 @@ class Silencer(private val context: Context, private val onSilence: () -> Unit) 
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
             .build()
 
+        // May-duck rather than plain transient: music playing alongside should dip under the
+        // announcement, not pause. A paused player relies on getting focus back to resume, and
+        // a battery saver that freezes it in the background leaves it paused for good.
         focusRequest = android.media.AudioFocusRequest
-            .Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
             .setAudioAttributes(attributes)
             .setWillPauseWhenDucked(false)
             .build()

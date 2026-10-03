@@ -234,7 +234,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val times = Prefs.vibrationRepeats(this, profile)
         Vibration.buzz(this, millis, times)
         // The button stays busy for the whole pattern, gaps included.
-        val total = millis * times + GAP_MS * (times - 1)
+        val total = Vibration.durationMillis(millis, times)
 
         section.vibrationTestButton.setText(R.string.vibration_test_running)
         section.vibrationTestButton.isEnabled = false
@@ -741,9 +741,6 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private companion object {
         const val PREVIEW_UTTERANCE = "settings-preview"
         const val PADDING_VERTICAL = 24
-
-        /** Matches the pause Vibration puts between buzzes. */
-        const val GAP_MS = 350L
 
         /** One decimal place: the slider steps in half-seconds. */
         val SECONDS_FORMAT: java.text.DecimalFormat = java.text.DecimalFormat("0.0")

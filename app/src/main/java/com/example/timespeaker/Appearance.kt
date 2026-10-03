@@ -42,12 +42,7 @@ enum class SpeechProfile(val keySuffix: String, val labelRes: Int) {
     MAJOR("_major", R.string.profile_major)
 }
 
-/**
- * How an announcement makes itself known.
- *
- * Vibration is deliberately limited to announcements: the countdown fires every minute, and a
- * buzz that often would be worse than the noise it is meant to replace.
- */
+/** How an announcement or countdown tick makes itself known. Each section chooses its own. */
 enum class AnnouncementFeedback(
     val key: String,
     val labelRes: Int,

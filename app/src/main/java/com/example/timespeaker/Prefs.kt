@@ -179,7 +179,6 @@ object Prefs {
         prefs(context).edit().putBoolean(KEY_COUNTDOWN, enabled).apply()
     }
 
-    /** Whether announcements speak, vibrate, or both. Never applies to the countdown. */
     /**
      * Whether announcements still speak while a call is in progress.
      *
