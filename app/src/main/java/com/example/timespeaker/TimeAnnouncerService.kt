@@ -15,7 +15,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import java.time.LocalDateTime
@@ -121,14 +120,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
                 return
             }
         }
-        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) = Unit
-            override fun onDone(utteranceId: String?) = finishUtterance()
-
-            @Deprecated("Superseded by onError(String, Int)", ReplaceWith(""))
-            override fun onError(utteranceId: String?) = finishUtterance()
-            override fun onError(utteranceId: String?, errorCode: Int) = finishUtterance()
-        })
+        engine.setOnUtteranceProgressListener(output.listener { finishUtterance() })
 
         ttsReady = true
         if (announcePending) {
@@ -250,6 +242,8 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // Guarded here rather than at each caller, so nothing can speak during a call by
         // going round the back. Vibration is left alone - it is silent anyway.
         if (onCall() && !Prefs.speakDuringCalls(this)) return
+        // Bluetooth-only with nothing connected: stay quiet rather than fall back to the speaker.
+        if (!output.canSpeak()) return
 
         // Keep the CPU alive for the utterances; with the screen off the device would otherwise
         // doze off mid-sentence. The timeout is a backstop in case onDone never arrives.

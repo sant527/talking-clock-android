@@ -61,6 +61,25 @@ enum class AnnouncementFeedback(
     }
 }
 
+/**
+ * Where announcements are heard.
+ *
+ * [AUTOMATIC] is what Android does on its own and what the app always did: Bluetooth while it is
+ * connected, the phone speaker otherwise.
+ */
+enum class SoundOutput(val key: String, val labelRes: Int) {
+    AUTOMATIC("auto", R.string.output_auto),
+    BLUETOOTH_ONLY("bluetooth", R.string.output_bluetooth),
+    SPEAKER_ONLY("speaker", R.string.output_speaker),
+    BOTH("both", R.string.output_both);
+
+    companion object {
+        val DEFAULT = AUTOMATIC
+
+        fun fromKey(key: String?): SoundOutput = entries.firstOrNull { it.key == key } ?: DEFAULT
+    }
+}
+
 /** Whether the clock is drawn as digits or as a dial. */
 enum class ClockStyle(val key: String, val labelRes: Int) {
     DIGITAL("digital", R.string.clock_digital),

@@ -7,6 +7,7 @@ import android.speech.tts.Voice
 import android.view.View
 import android.widget.RadioButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.timespeaker.databinding.ActivitySettingsBinding
 import com.example.timespeaker.databinding.ItemProfileBinding
@@ -67,6 +68,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setUpThemePicker()
         setUpClockStylePicker()
         setUpCallsSwitch()
+        setUpSoundOutput()
 
         // Route the hardware volume keys at the stream announcements actually use, so the rocker
         // adjusts the right thing while this screen is open.
@@ -77,6 +79,17 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             value = Prefs.volumePercent(this, profile),
             onChange = { Prefs.setVolumePercent(this, it, profile); updateVolumeLabel(it) }
         )
+        setUpSlider(
+            slider = binding.btVolumeSlider,
+            value = Prefs.bluetoothVolumePercent(this, profile),
+            onChange = { Prefs.setBluetoothVolumePercent(this, it, profile); updateBluetoothVolume() }
+        )
+        binding.btVolumeSwitch.setOnCheckedChangeListener { _, separate ->
+            // Also fires when switching profiles loads the stored value; nothing to save then.
+            if (separate == Prefs.separateBluetoothVolume(this, profile)) return@setOnCheckedChangeListener
+            Prefs.setSeparateBluetoothVolume(this, separate, profile)
+            updateBluetoothVolume()
+        }
         setUpSlider(
             slider = binding.pitchSlider,
             value = Prefs.pitchPercent(this, profile),
@@ -469,7 +482,19 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.pitchSlider.value = Prefs.pitchPercent(this, profile).toFloat()
         binding.rateSlider.value = Prefs.ratePercent(this, profile).toFloat()
         updateVolumeLabel(Prefs.volumePercent(this, profile))
+        binding.btVolumeSwitch.isChecked = Prefs.separateBluetoothVolume(this, profile)
+        binding.btVolumeSlider.value = Prefs.bluetoothVolumePercent(this, profile).toFloat()
+        updateBluetoothVolume()
         updateToneLabels()
+    }
+
+    /** The Bluetooth slider only shows while Bluetooth has a volume of its own. */
+    private fun updateBluetoothVolume() {
+        val separate = Prefs.separateBluetoothVolume(this, profile)
+        binding.btVolumeLabel.visibility = visibleIf(separate)
+        binding.btVolumeSlider.visibility = visibleIf(separate)
+        binding.btVolumeLabel.text =
+            getString(R.string.bt_volume_label, Prefs.bluetoothVolumePercent(this, profile))
     }
 
     /** At a one-minute interval there is nothing to count down to, so the switch is disabled. */
@@ -535,6 +560,23 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    private fun setUpSoundOutput() {
+        val buttons = mapOf(
+            SoundOutput.AUTOMATIC to binding.outputAuto,
+            SoundOutput.BLUETOOTH_ONLY to binding.outputBluetooth,
+            SoundOutput.SPEAKER_ONLY to binding.outputSpeaker,
+            SoundOutput.BOTH to binding.outputBoth
+        )
+        binding.outputGroup.check(buttons.getValue(Prefs.soundOutput(this)).id)
+        binding.outputGroup.setOnCheckedChangeListener { _, checkedId ->
+            val chosen = buttons.entries.firstOrNull { it.value.id == checkedId }?.key
+                ?: return@setOnCheckedChangeListener
+            Prefs.setSoundOutput(this, chosen)
+            // Hearing where it now comes out is the quickest way to check the choice.
+            preview()
+        }
+    }
+
     private fun setUpClockStylePicker() {
         val digital = Prefs.clockStyle(this) == ClockStyle.DIGITAL
         binding.clockStyleGroup.check(
@@ -578,6 +620,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (engine.setLanguage(Locale.getDefault()) < TextToSpeech.LANG_AVAILABLE) {
             engine.setLanguage(Locale.US)
         }
+        engine.setOnUtteranceProgressListener(output.listener { })
         ttsReady = true
         showVoices(VoiceSettings.availableVoices(engine))
     }
@@ -702,12 +745,18 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             TimeSpeech.phraseFor(LocalTime.now())
         }
+        if (!output.canSpeak()) {
+            Toast.makeText(this, R.string.output_no_bluetooth, Toast.LENGTH_SHORT).show()
+            return
+        }
         val repeats = Prefs.speakRepeats(this, profile)
         output.speak(engine, text, PREVIEW_UTTERANCE, profile, repeats)
     }
 
     private fun resetToDefaults() {
         Prefs.setVolumePercent(this, Prefs.DEFAULT_VOLUME_PERCENT, profile)
+        Prefs.setSeparateBluetoothVolume(this, false, profile)
+        Prefs.setBluetoothVolumePercent(this, Prefs.DEFAULT_VOLUME_PERCENT, profile)
         Prefs.setPitchPercent(this, Prefs.DEFAULT_PITCH_PERCENT, profile)
         Prefs.setRatePercent(this, Prefs.DEFAULT_RATE_PERCENT, profile)
 

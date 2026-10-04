@@ -99,6 +99,15 @@
     <string name="countdown_explainer">Between announcements, give the minutes left — at 7:51 with a five-minute interval it says “four”, buzzes, or both, as the style below chooses.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
+    <string name="bt_volume_switch">Separate volume for Bluetooth</string>
+    <string name="bt_volume_label">Bluetooth volume: %1$d%%</string>
+    <string name="output_heading">Sound output</string>
+    <string name="output_auto">Automatic — Bluetooth when connected, otherwise speaker</string>
+    <string name="output_bluetooth">Bluetooth only</string>
+    <string name="output_speaker">Phone speaker only</string>
+    <string name="output_both">Bluetooth and phone speaker</string>
+    <string name="output_hint">Bluetooth only stays silent while nothing is connected. Bluetooth and phone speaker follows the alarm volume, unless Bluetooth has a separate volume below.</string>
+    <string name="output_no_bluetooth">No Bluetooth device connected</string>
     <string name="calls_heading">During a call</string>
     <string name="calls_switch">Keep speaking during calls</string>
     <string name="calls_hint">With this off, announcements stay silent while you are on a call, including WhatsApp and other internet calls. The schedule carries on either way, so the next one arrives as usual.</string>

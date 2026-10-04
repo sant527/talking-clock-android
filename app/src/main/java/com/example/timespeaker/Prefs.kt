@@ -19,6 +19,9 @@ object Prefs {
     private const val KEY_VIBRATION_MS = "vibration_millis"
     private const val KEY_INTERVAL_ENABLED = "interval_enabled"
     private const val KEY_SPEAK_IN_CALLS = "speak_during_calls"
+    private const val KEY_SOUND_OUTPUT = "sound_output"
+    private const val KEY_BT_VOLUME_SEPARATE = "bluetooth_volume_separate"
+    private const val KEY_BT_VOLUME = "bluetooth_volume"
     private const val KEY_MAJOR_ENABLED = "major_enabled"
     private const val KEY_MAJOR_INTERVAL = "major_interval"
     private const val KEY_MAJOR_REPEATS = "major_repeats"
@@ -86,6 +89,22 @@ object Prefs {
 
     fun setVolumePercent(context: Context, percent: Int, profile: SpeechProfile = SpeechProfile.MAIN) =
         putInt(context, key(KEY_VOLUME, profile), percent.coerceIn(0, MAX_VOLUME_PERCENT))
+
+    /** Whether Bluetooth gets a volume of its own; off, it shares [volumePercent]. */
+    fun separateBluetoothVolume(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Boolean =
+        prefs(context).getBoolean(key(KEY_BT_VOLUME_SEPARATE, profile), false)
+
+    fun setSeparateBluetoothVolume(context: Context, separate: Boolean, profile: SpeechProfile = SpeechProfile.MAIN) {
+        prefs(context).edit().putBoolean(key(KEY_BT_VOLUME_SEPARATE, profile), separate).apply()
+    }
+
+    /** The volume on Bluetooth while [separateBluetoothVolume] is on. Same scale as [volumePercent]. */
+    fun bluetoothVolumePercent(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Int =
+        prefs(context).getInt(key(KEY_BT_VOLUME, profile), volumePercent(context, profile))
+            .coerceIn(0, MAX_VOLUME_PERCENT)
+
+    fun setBluetoothVolumePercent(context: Context, percent: Int, profile: SpeechProfile = SpeechProfile.MAIN) =
+        putInt(context, key(KEY_BT_VOLUME, profile), percent.coerceIn(0, MAX_VOLUME_PERCENT))
 
     /** Lower pitch reads as a deeper voice, higher as a lighter one. */
     fun pitchPercent(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Int =
@@ -190,6 +209,14 @@ object Prefs {
 
     fun setSpeakDuringCalls(context: Context, speak: Boolean) {
         prefs(context).edit().putBoolean(KEY_SPEAK_IN_CALLS, speak).apply()
+    }
+
+    /** Bluetooth, the phone speaker, or both. One choice for every announcement. */
+    fun soundOutput(context: Context): SoundOutput =
+        SoundOutput.fromKey(prefs(context).getString(KEY_SOUND_OUTPUT, null))
+
+    fun setSoundOutput(context: Context, output: SoundOutput) {
+        prefs(context).edit().putString(KEY_SOUND_OUTPUT, output.key).apply()
     }
 
     /** Whether the ordinary interval announcements run at all. */
