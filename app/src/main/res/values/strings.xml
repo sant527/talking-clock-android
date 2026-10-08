@@ -99,6 +99,12 @@
     <string name="countdown_explainer">Between announcements, give the minutes left — at 7:51 with a five-minute interval it says “four”, buzzes, or both, as the style below chooses.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
+    <string name="common_volume_switch">Same volume for all announcements</string>
+    <string name="common_volume_label">Volume for all: %1$d%%</string>
+    <string name="common_volume_label_boosted">Volume for all: %1$d%% (boosted)</string>
+    <string name="common_volume_hint">On, announcements, countdown and major all play at this one volume, and their own volume sliders are set aside. They are kept, and come back when this is switched off.</string>
+    <string name="bt_same_volume_switch">Bluetooth uses the normal volume</string>
+    <string name="bt_same_volume_hint">On, every announcement plays on Bluetooth at its ordinary volume and the separate Bluetooth volumes are set aside. They are kept, and come back when this is switched off.</string>
     <string name="bt_volume_switch">Separate volume for Bluetooth</string>
     <string name="bt_volume_label">Bluetooth volume: %1$d%%</string>
     <string name="output_heading">Sound output</string>

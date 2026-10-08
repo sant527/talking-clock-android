@@ -69,6 +69,8 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setUpClockStylePicker()
         setUpCallsSwitch()
         setUpSoundOutput()
+        setUpCommonVolume()
+        setUpBluetoothSameVolume()
 
         // Route the hardware volume keys at the stream announcements actually use, so the rocker
         // adjusts the right thing while this screen is open.
@@ -481,15 +483,19 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         binding.volumeSlider.value = Prefs.volumePercent(this, profile).toFloat()
         binding.pitchSlider.value = Prefs.pitchPercent(this, profile).toFloat()
         binding.rateSlider.value = Prefs.ratePercent(this, profile).toFloat()
-        updateVolumeLabel(Prefs.volumePercent(this, profile))
+        updateVolumeLabel(Prefs.effectiveVolumePercent(this, profile))
         binding.btVolumeSwitch.isChecked = Prefs.separateBluetoothVolume(this, profile)
         binding.btVolumeSlider.value = Prefs.bluetoothVolumePercent(this, profile).toFloat()
         updateBluetoothVolume()
         updateToneLabels()
     }
 
-    /** The Bluetooth slider only shows while Bluetooth has a volume of its own. */
+    /**
+     * The Bluetooth slider only shows while Bluetooth has a volume of its own, and the whole box
+     * goes while the overall switch says Bluetooth follows the normal volume.
+     */
     private fun updateBluetoothVolume() {
+        binding.btVolumeBox.visibility = visibleIf(!Prefs.bluetoothSameVolume(this))
         val separate = Prefs.separateBluetoothVolume(this, profile)
         binding.btVolumeLabel.visibility = visibleIf(separate)
         binding.btVolumeSlider.visibility = visibleIf(separate)
@@ -574,6 +580,46 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Prefs.setSoundOutput(this, chosen)
             // Hearing where it now comes out is the quickest way to check the choice.
             preview()
+        }
+    }
+
+    private fun setUpCommonVolume() {
+        binding.commonVolumeSwitch.isChecked = Prefs.commonVolumeEnabled(this)
+        binding.commonVolumeSwitch.setOnCheckedChangeListener { _, enabled ->
+            Prefs.setCommonVolumeEnabled(this, enabled)
+            updateCommonVolume()
+        }
+        setUpSlider(
+            slider = binding.commonVolumeSlider,
+            value = Prefs.commonVolumePercent(this),
+            onChange = { Prefs.setCommonVolumePercent(this, it); updateCommonVolume() }
+        )
+        updateCommonVolume()
+    }
+
+    /**
+     * The common slider shows only while it is in charge, and each announcement's own volume
+     * slider hides meanwhile - two sliders for one volume, only one of them working, would mislead.
+     */
+    private fun updateCommonVolume() {
+        val common = Prefs.commonVolumeEnabled(this)
+        val percent = Prefs.commonVolumePercent(this)
+        binding.commonVolumeLabel.visibility = visibleIf(common)
+        binding.commonVolumeSlider.visibility = visibleIf(common)
+        binding.commonVolumeLabel.text = getString(
+            if (percent > 100) R.string.common_volume_label_boosted else R.string.common_volume_label,
+            percent
+        )
+        binding.volumeLabel.visibility = visibleIf(!common)
+        binding.volumeSlider.visibility = visibleIf(!common)
+        updateVolumeLabel(Prefs.effectiveVolumePercent(this, profile))
+    }
+
+    private fun setUpBluetoothSameVolume() {
+        binding.btSameVolumeSwitch.isChecked = Prefs.bluetoothSameVolume(this)
+        binding.btSameVolumeSwitch.setOnCheckedChangeListener { _, same ->
+            Prefs.setBluetoothSameVolume(this, same)
+            updateBluetoothVolume()
         }
     }
 

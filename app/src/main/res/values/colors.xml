@@ -2,6 +2,11 @@
     <color name="on_accent_dark">#0B0E12</color>
     <color name="on_accent_light">#FFFFFF</color>
 
+    <color name="bluetooth_accent_dark">#C3A6FF</color>
+    <color name="bluetooth_accent_dark_dim">#26C3A6FF</color>
+    <color name="bluetooth_accent_light">#6B3FD4</color>
+    <color name="bluetooth_accent_light_dim">#146B3FD4</color>
+
     <!-- Text colours are tinted towards each palette's accent rather than left neutral, so the
          whole screen — clock digits, dial hands, tick marks, labels — carries the theme's hue
          instead of only the accented details. Contrast against the background is kept well

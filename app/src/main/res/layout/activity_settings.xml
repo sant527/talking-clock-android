@@ -150,6 +150,56 @@
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="13sp" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/commonVolumeSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/common_volume_switch"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:id="@+id/commonVolumeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="15sp" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/commonVolumeSlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="10"
+            android:valueFrom="0"
+            android:valueTo="500"
+            app:labelBehavior="gone" />
+
+        <TextView
+            android:id="@+id/commonVolumeHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/common_volume_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/btSameVolumeSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:drawableStart="@drawable/ic_bluetooth"
+            android:drawablePadding="8dp"
+            android:text="@string/bt_same_volume_switch"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bt_same_volume_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
         <!-- The selector is the screen's spine: everything below it belongs to whichever
              announcement is picked here. All three are always listed, because this is also how
              you reach a switched-off one to turn it back on. -->
@@ -399,7 +449,7 @@
             android:layout_height="wrap_content"
             android:stepSize="10"
             android:valueFrom="0"
-            android:valueTo="400"
+            android:valueTo="500"
             app:labelBehavior="gone" />
 
         <TextView
@@ -421,30 +471,59 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/btVolumeSwitch"
+        <!-- Its own colour, box and chunkier slider: two volume sliders one above the other were
+             too easy to confuse. -->
+        <LinearLayout
+            android:id="@+id/btVolumeBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/bt_volume_switch"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:background="@drawable/bg_bluetooth_volume"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp">
 
-        <TextView
-            android:id="@+id/btVolumeLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="15sp" />
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/btVolumeSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_bluetooth"
+                android:drawablePadding="8dp"
+                android:text="@string/bt_volume_switch"
+                android:textColor="?android:attr/textColorPrimary" />
 
-        <com.google.android.material.slider.Slider
-            android:id="@+id/btVolumeSlider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stepSize="10"
-            android:valueFrom="0"
-            android:valueTo="400"
-            app:labelBehavior="gone" />
+            <TextView
+                android:id="@+id/btVolumeLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?attr/bluetoothAccent"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- A round knob on a thick track, where the other sliders have a bar: equal thumb
+                 width and height is what makes the knob a circle. -->
+            <com.google.android.material.slider.Slider
+                android:id="@+id/btVolumeSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stepSize="10"
+                android:valueFrom="0"
+                android:valueTo="500"
+                app:haloColor="?attr/bluetoothAccentDim"
+                app:labelBehavior="gone"
+                app:thumbColor="?attr/bluetoothAccent"
+                app:thumbHeight="26dp"
+                app:thumbStrokeColor="?android:attr/textColorPrimary"
+                app:thumbStrokeWidth="2dp"
+                app:thumbTrackGapSize="4dp"
+                app:thumbWidth="26dp"
+                app:tickVisible="false"
+                app:trackColorActive="?attr/bluetoothAccent"
+                app:trackColorInactive="?attr/bluetoothAccentDim"
+                app:trackHeight="14dp"
+                app:trackStopIndicatorSize="0dp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/pitchLabel"

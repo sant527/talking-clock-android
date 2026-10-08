@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Marks the Bluetooth volume, which sits right below the ordinary one. It must differ from
+         every palette's accent, and two of those are blue, so it is violet rather than the
+         blue Bluetooth is usually drawn in. -->
+    <attr name="bluetoothAccent" format="color" />
+    <attr name="bluetoothAccentDim" format="color" />
+</resources>

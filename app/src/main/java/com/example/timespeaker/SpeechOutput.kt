@@ -104,9 +104,9 @@ class SpeechOutput(private val context: Context) {
         release()
 
         val output = Prefs.soundOutput(context)
-        val speakerPercent = Prefs.volumePercent(context, profile)
+        val speakerPercent = Prefs.effectiveVolumePercent(context, profile)
         val bluetooth = bluetooth()
-        val bluetoothPercent = if (Prefs.separateBluetoothVolume(context, profile)) {
+        val bluetoothPercent = if (Prefs.usesBluetoothVolume(context, profile)) {
             Prefs.bluetoothVolumePercent(context, profile)
         } else {
             speakerPercent
@@ -280,11 +280,14 @@ class SpeechOutput(private val context: Context) {
     }
 
     private companion object {
-        /** Gain applied at the 400% end of the slider, in millibels (+40 dB). */
-        const val MAX_BOOST_MILLIBELS = 4000f
+        /**
+         * Gain applied at the 500% end of the slider, in millibels (+53 dB). The same rise per
+         * percent as the old 400% ceiling had, so existing settings sound as they did.
+         */
+        const val MAX_BOOST_MILLIBELS = 5300f
 
-        /** Slider span over which that gain is applied: 100% to 400%. */
-        const val BOOST_RANGE_PERCENT = 300f
+        /** Slider span over which that gain is applied: 100% to 500%. */
+        const val BOOST_RANGE_PERCENT = 400f
 
         /** Marks the rendering step of speaker-only speech, so it is not taken for the end. */
         const val SYNTHESIS_SUFFIX = "-render"

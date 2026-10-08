@@ -6,6 +6,8 @@
 
     <style name="Theme.TimeSpeaker.Dark" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorOnPrimary">@color/on_accent_dark</item>
+        <item name="bluetoothAccent">@color/bluetooth_accent_dark</item>
+        <item name="bluetoothAccentDim">@color/bluetooth_accent_dark_dim</item>
         <item name="colorSecondaryContainer">?attr/colorPrimary</item>
         <item name="colorOnSecondaryContainer">?attr/colorOnPrimary</item>
         <item name="android:colorControlActivated">?attr/colorPrimary</item>
@@ -15,6 +17,8 @@
 
     <style name="Theme.TimeSpeaker.Light" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorOnPrimary">@color/on_accent_light</item>
+        <item name="bluetoothAccent">@color/bluetooth_accent_light</item>
+        <item name="bluetoothAccentDim">@color/bluetooth_accent_light_dim</item>
         <item name="colorSecondaryContainer">?attr/colorPrimary</item>
         <item name="colorOnSecondaryContainer">?attr/colorOnPrimary</item>
         <item name="android:colorControlActivated">?attr/colorPrimary</item>

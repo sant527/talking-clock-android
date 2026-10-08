@@ -22,6 +22,9 @@ object Prefs {
     private const val KEY_SOUND_OUTPUT = "sound_output"
     private const val KEY_BT_VOLUME_SEPARATE = "bluetooth_volume_separate"
     private const val KEY_BT_VOLUME = "bluetooth_volume"
+    private const val KEY_BT_SAME_VOLUME = "bluetooth_same_volume"
+    private const val KEY_COMMON_VOLUME_ENABLED = "common_volume_enabled"
+    private const val KEY_COMMON_VOLUME = "common_volume"
     private const val KEY_MAJOR_ENABLED = "major_enabled"
     private const val KEY_MAJOR_INTERVAL = "major_interval"
     private const val KEY_MAJOR_REPEATS = "major_repeats"
@@ -68,7 +71,7 @@ object Prefs {
     val INTERVAL_CHOICES = listOf(1, 5, 10, 15, 30, 60)
 
     const val DEFAULT_VOLUME_PERCENT = 100
-    const val MAX_VOLUME_PERCENT = 400
+    const val MAX_VOLUME_PERCENT = 500
 
     /** Pitch and rate are stored as percentages; 100 is the engine's natural setting. */
     const val DEFAULT_PITCH_PERCENT = 100
@@ -77,7 +80,7 @@ object Prefs {
     const val MAX_TONE_PERCENT = 200
 
     /**
-     * Announcement loudness, 0–400.
+     * Announcement loudness, 0–500.
      *
      * Up to 100 this is a share of the device's media volume. Above 100 the speech engine is
      * already at its ceiling, so the extra is applied as amplifier gain instead — see
@@ -90,6 +93,24 @@ object Prefs {
     fun setVolumePercent(context: Context, percent: Int, profile: SpeechProfile = SpeechProfile.MAIN) =
         putInt(context, key(KEY_VOLUME, profile), percent.coerceIn(0, MAX_VOLUME_PERCENT))
 
+    /** One volume for every announcement, in place of each one's own [volumePercent]. */
+    fun commonVolumeEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_COMMON_VOLUME_ENABLED, false)
+
+    fun setCommonVolumeEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_COMMON_VOLUME_ENABLED, enabled).apply()
+    }
+
+    fun commonVolumePercent(context: Context): Int =
+        prefs(context).getInt(KEY_COMMON_VOLUME, DEFAULT_VOLUME_PERCENT).coerceIn(0, MAX_VOLUME_PERCENT)
+
+    fun setCommonVolumePercent(context: Context, percent: Int) =
+        putInt(context, KEY_COMMON_VOLUME, percent.coerceIn(0, MAX_VOLUME_PERCENT))
+
+    /** The volume an announcement actually plays at: the common one while it is switched on. */
+    fun effectiveVolumePercent(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Int =
+        if (commonVolumeEnabled(context)) commonVolumePercent(context) else volumePercent(context, profile)
+
     /** Whether Bluetooth gets a volume of its own; off, it shares [volumePercent]. */
     fun separateBluetoothVolume(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Boolean =
         prefs(context).getBoolean(key(KEY_BT_VOLUME_SEPARATE, profile), false)
@@ -97,6 +118,18 @@ object Prefs {
     fun setSeparateBluetoothVolume(context: Context, separate: Boolean, profile: SpeechProfile = SpeechProfile.MAIN) {
         prefs(context).edit().putBoolean(key(KEY_BT_VOLUME_SEPARATE, profile), separate).apply()
     }
+
+    /** One switch over every announcement: Bluetooth plays at the ordinary volume, whatever each says. */
+    fun bluetoothSameVolume(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_BT_SAME_VOLUME, false)
+
+    fun setBluetoothSameVolume(context: Context, same: Boolean) {
+        prefs(context).edit().putBoolean(KEY_BT_SAME_VOLUME, same).apply()
+    }
+
+    /** Whether Bluetooth actually plays at its own volume, after the overall switch has its say. */
+    fun usesBluetoothVolume(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Boolean =
+        !bluetoothSameVolume(context) && separateBluetoothVolume(context, profile)
 
     /** The volume on Bluetooth while [separateBluetoothVolume] is on. Same scale as [volumePercent]. */
     fun bluetoothVolumePercent(context: Context, profile: SpeechProfile = SpeechProfile.MAIN): Int =
