@@ -32,15 +32,22 @@
         android:layout_height="130dp"
         android:layout_marginTop="20dp">
 
+        <!-- One line that shrinks to fit: at a large system font size the time wrapped, and the
+             fixed-height block cut it off after the minutes. -->
         <TextView
             android:id="@+id/clockText"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fontFamily="sans-serif-light"
             android:gravity="center"
+            android:maxLines="1"
             android:text="@string/placeholder_time"
             android:textColor="?attr/colorPrimary"
-            android:textSize="64sp" />
+            android:textSize="64sp"
+            app:autoSizeMaxTextSize="64sp"
+            app:autoSizeMinTextSize="24sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
 
         <com.example.timespeaker.AnalogClockView
             android:id="@+id/analogClock"
