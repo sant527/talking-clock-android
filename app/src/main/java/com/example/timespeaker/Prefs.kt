@@ -20,6 +20,7 @@ object Prefs {
     private const val KEY_INTERVAL_ENABLED = "interval_enabled"
     private const val KEY_SPEAK_IN_CALLS = "speak_during_calls"
     private const val KEY_SOUND_OUTPUT = "sound_output"
+    private const val KEY_DUCK_OTHER_AUDIO = "duck_other_audio"
     private const val KEY_BT_VOLUME_SEPARATE = "bluetooth_volume_separate"
     private const val KEY_BT_VOLUME = "bluetooth_volume"
     private const val KEY_BT_SAME_VOLUME = "bluetooth_same_volume"
@@ -242,6 +243,17 @@ object Prefs {
 
     fun setSpeakDuringCalls(context: Context, speak: Boolean) {
         prefs(context).edit().putBoolean(KEY_SPEAK_IN_CALLS, speak).apply()
+    }
+
+    /**
+     * Whether speech asks music and video to quieten while it plays. Off, it plays over them -
+     * for players that pause instead of quietening and then fail to resume.
+     */
+    fun duckOtherAudio(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_DUCK_OTHER_AUDIO, true)
+
+    fun setDuckOtherAudio(context: Context, duck: Boolean) {
+        prefs(context).edit().putBoolean(KEY_DUCK_OTHER_AUDIO, duck).apply()
     }
 
     /** Bluetooth, the phone speaker, or both. One choice for every announcement. */

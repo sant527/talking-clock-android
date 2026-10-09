@@ -230,7 +230,8 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
     private fun vibrate(profile: SpeechProfile) {
         val millis = Prefs.vibrationMillis(this, profile).toLong()
         val repeats = Prefs.vibrationRepeats(this, profile)
-        silencer.start()
+        // A buzz makes no sound, so it has no business asking other audio to make way.
+        silencer.start(takeFocus = false)
         Vibration.buzz(this, millis, repeats)
         handler.removeCallbacks(endVibration)
         handler.postDelayed(endVibration, Vibration.durationMillis(millis, repeats))
@@ -248,7 +249,7 @@ class TimeAnnouncerService : Service(), TextToSpeech.OnInitListener {
         // Keep the CPU alive for the utterances; with the screen off the device would otherwise
         // doze off mid-sentence. The timeout is a backstop in case onDone never arrives.
         acquireWakeLock()
-        silencer.start()
+        silencer.start(takeFocus = Prefs.duckOtherAudio(this))
         // Counted, so a repeated announcement does not release the wake lock after its first
         // utterance and fall asleep partway through.
         pendingUtterances = repeats.coerceAtLeast(1)

@@ -151,6 +151,21 @@
             android:textSize="13sp" />
 
         <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/duckSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/duck_switch"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/duck_hint"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/commonVolumeSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -69,6 +69,7 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         setUpClockStylePicker()
         setUpCallsSwitch()
         setUpSoundOutput()
+        setUpDuckSwitch()
         setUpCommonVolume()
         setUpBluetoothSameVolume()
 
@@ -581,6 +582,11 @@ class SettingsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             // Hearing where it now comes out is the quickest way to check the choice.
             preview()
         }
+    }
+
+    private fun setUpDuckSwitch() {
+        binding.duckSwitch.isChecked = Prefs.duckOtherAudio(this)
+        binding.duckSwitch.setOnCheckedChangeListener { _, duck -> Prefs.setDuckOtherAudio(this, duck) }
     }
 
     private fun setUpCommonVolume() {

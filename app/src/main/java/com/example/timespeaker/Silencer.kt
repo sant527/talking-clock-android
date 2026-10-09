@@ -29,13 +29,19 @@ class Silencer(private val context: Context, private val onSilence: () -> Unit) 
     private var screenReceiver: BroadcastReceiver? = null
     private var focusRequest: android.media.AudioFocusRequest? = null
 
-    fun start() {
-        if (session != null) return
-
+    /**
+     * [takeFocus] is false for anything silent, and when the user would rather other audio was
+     * left alone: taking focus asks other players to duck, and many - video players especially -
+     * pause instead, and do not always resume. The power key still works without it.
+     */
+    fun start(takeFocus: Boolean) {
         // Audio focus first. A media session only receives the volume keys while it is the
         // active one, and holding focus is what makes it active - without this the presses go
         // to the system volume dialog and never reach us.
-        requestAudioFocus()
+        //
+        // Checked before the early return, so speech that follows a silent buzz still gets it.
+        if (takeFocus && focusRequest == null) requestAudioFocus()
+        if (session != null) return
 
         session = MediaSession(context, SESSION_TAG).apply {
             setPlaybackToRemote(object : VolumeProvider(VOLUME_CONTROL_RELATIVE, MAX_VOLUME, HALF) {

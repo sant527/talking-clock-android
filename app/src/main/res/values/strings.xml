@@ -99,6 +99,8 @@
     <string name="countdown_explainer">Between announcements, give the minutes left — at 7:51 with a five-minute interval it says “four”, buzzes, or both, as the style below chooses.</string>
     <string name="profile_announcements">Announcements</string>
     <string name="profile_countdown">Countdown</string>
+    <string name="duck_switch">Lower other audio while speaking</string>
+    <string name="duck_hint">Music and videos get quieter while an announcement speaks. Some players, such as MX Player, pause instead and may not resume — switch this off and announcements play over them, leaving them untouched. With it off, the volume keys no longer cut an announcement short; the power key still does.</string>
     <string name="common_volume_switch">Same volume for all announcements</string>
     <string name="common_volume_label">Volume for all: %1$d%%</string>
     <string name="common_volume_label_boosted">Volume for all: %1$d%% (boosted)</string>
